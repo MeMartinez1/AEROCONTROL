@@ -781,48 +781,48 @@ function showIPModal(msg) {
 
 function connectESP() {
   if (!ESP_IP) { showIPModal(); return; }
-  document.getElementById('cstat').textContent = 'conectando...';
-  document.getElementById('ip-lbl').textContent = ESP_IP;
+  var el_cstat = document.getElementById('cstat');
+  var el_iplbl = document.getElementById('ip-lbl');
+  if(el_cstat) el_cstat.textContent = 'conectando...';
+  if(el_iplbl) el_iplbl.textContent = ESP_IP;
 
-  // Primero verificar que el ESP32 responde por HTTP
-  fetch('http://' + ESP_IP + '/api/status', {signal: AbortSignal.timeout(3000)})
+  // Primera lectura inmediata
+  pollESP();
+  // Polling cada 5 segundos (funciona desde HTTPS sin problemas)
+  if(window._pollTimer) clearInterval(window._pollTimer);
+  window._pollTimer = setInterval(pollESP, 5000);
+
+  // Historial al conectar
+  fetchHistory();
+}
+
+function pollESP() {
+  fetch('http://' + ESP_IP + '/api/status')
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      // ESP32 encontrado — conectar WebSocket
-      openWS();
-      // Cargar historial
-      fetch('http://' + ESP_IP + '/api/history')
-        .then(function(r2){ return r2.json(); })
-        .then(function(h){ loadHistory(h); })
-        .catch(function(){});
+      wsOk = true;
+      var el_cstat = document.getElementById('cstat');
+      var el_bst   = document.getElementById('bst');
+      if(el_cstat) el_cstat.textContent = 'conectado';
+      if(el_bst)   el_bst.textContent   = '● ESP32 ' + ESP_IP;
+      onStatus(d);
     })
     .catch(function() {
-      document.getElementById('cstat').textContent = 'sin respuesta';
-      showIPModal('No responde ' + ESP_IP);
+      wsOk = false;
+      var el_cstat = document.getElementById('cstat');
+      if(el_cstat) el_cstat.textContent = 'sin respuesta';
     });
 }
 
-function openWS() {
-  if (ws) { try{ ws.close(); }catch(e){} }
-  ws = new WebSocket('ws://' + ESP_IP + ':81');
-
-  ws.onopen = function() {
-    wsOk = true;
-    document.getElementById('cstat').textContent = 'conectado';
-    document.getElementById('bst').textContent = '● ESP32 ' + ESP_IP;
-    clearTimeout(wsRetry);
-  };
-
-  ws.onmessage = function(e) {
-    try{ var d=JSON.parse(e.data); if(d.type==='status') onStatus(d); }catch(ex){}
-  };
-
-  ws.onclose = function() {
-    wsOk = false;
-    document.getElementById('cstat').textContent = 'reconectando...';
-    wsRetry = setTimeout(openWS, 3000);
-  };
+function fetchHistory() {
+  fetch('http://' + ESP_IP + '/api/history')
+    .then(function(r){ return r.json(); })
+    .then(function(h){ loadHistory(h); })
+    .catch(function(){});
 }
+
+// openWS queda como stub para no romper referencias
+function openWS() { connectESP(); }
 
 function onStatus(d) {
   var now = new Date();
@@ -860,14 +860,36 @@ function loadHistory(d) {
   },300);
 }
 
-// Botón cambiar IP en el header
+// Arranque automatico — sin prompt
 document.addEventListener('DOMContentLoaded', function() {
+  // IP fija del ESP32 — cambiar si cambia la IP
+  var IP_FIJA = '192.168.0.59';
+
+  // Usar IP guardada o la fija
+  if (!ESP_IP) {
+    ESP_IP = IP_FIJA;
+    localStorage.setItem('esp32_ip', ESP_IP);
+  }
+
+  // Subtitulo clickeable para cambiar IP si hace falta
   var sub = document.getElementById('ip-lbl');
-  if(sub){ sub.style.cursor='pointer'; sub.title='Tap para cambiar IP';
-    sub.addEventListener('click', function(){ showIPModal(); }); }
-  // Intentar conectar automáticamente
-  if(ESP_IP) connectESP();
-  else showIPModal('Primera vez — configurá la IP del ESP32');
+  if(sub){
+    sub.textContent = ESP_IP;
+    sub.style.cursor = 'pointer';
+    sub.title = 'Tap para cambiar IP';
+    sub.addEventListener('click', function(){
+      var nueva = prompt('IP del ESP32:', ESP_IP);
+      if(nueva && nueva.trim()){
+        ESP_IP = nueva.trim();
+        localStorage.setItem('esp32_ip', ESP_IP);
+        sub.textContent = ESP_IP;
+        connectESP();
+      }
+    });
+  }
+
+  // Conectar directo sin preguntar — pequeño delay para que Chart.js termine
+  setTimeout(connectESP, 500);
 });
 
 function pad(n){return n<10?'0'+n:n;}
