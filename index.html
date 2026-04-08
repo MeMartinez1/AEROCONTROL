@@ -796,8 +796,18 @@ function connectESP() {
   fetchHistory();
 }
 
+function espUrl(path) {
+  // Si estamos en HTTPS (GitHub Pages) usar proxy para evitar Mixed Content
+  // Si estamos en HTTP (red local directo) conectar directo
+  var base = 'http://' + ESP_IP;
+  if (location.protocol === 'https:') {
+    return 'https://corsproxy.io/?' + encodeURIComponent(base + path);
+  }
+  return base + path;
+}
+
 function pollESP() {
-  fetch('http://' + ESP_IP + '/api/status')
+  fetch(espUrl('/api/status'))
     .then(function(r) { return r.json(); })
     .then(function(d) {
       wsOk = true;
@@ -815,7 +825,7 @@ function pollESP() {
 }
 
 function fetchHistory() {
-  fetch('http://' + ESP_IP + '/api/history')
+  fetch(espUrl('/api/history'))
     .then(function(r){ return r.json(); })
     .then(function(h){ loadHistory(h); })
     .catch(function(){});
