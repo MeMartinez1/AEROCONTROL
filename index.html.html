@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b110e">
+<title>AeroControl</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#1db97a;--r:#e84545;--y:#f0a500;--b:#3a8fe8;--c:#00c8e0;
+  --bg:#0b110e;--card:#131f17;--card2:#0f1a12;
+  --border:#1e3028;--text:#cce0d5;--muted:#4d7060;
+  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;min-height:100vh}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.on{display:flex}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 10px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:99}
+.logo{display:flex;align-items:center;gap:8px}
+.lmark{width:28px;height:28px;background:var(--g);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.lmark svg{width:14px;height:14px;fill:var(--bg)}
+.lname{font-size:15px;font-weight:700;letter-spacing:-.02em;color:#fff}
+.lsub{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:1px}
+.conn{display:flex;align-items:center;gap:5px;font-size:9px;font-family:var(--mono);color:var(--muted)}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.nav-btn{display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);padding:6px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.nav-btn:hover,.nav-btn.on{border-color:var(--g);color:var(--g)}
+.nav-btn svg{width:12px;height:12px;fill:currentColor}
+
+/* ── MAIN CONTENT ── */
+main{flex:1;padding:14px 14px 80px;overflow-y:auto}
+
+/* ── GAUGE GRID ── */
+.gauge-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.gauge-grid.three{grid-template-columns:1fr 1fr 1fr}
+.gauge-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 8px 10px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;transition:opacity .2s}
+.gauge-wrap.dim{opacity:.32}
+.gauge-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.gauge-wrap.ok::before{background:var(--g)}
+.gauge-wrap.hi::before{background:var(--r)}
+.gauge-wrap.lo::before{background:var(--b)}
+.gauge-wrap.wn::before{background:var(--y)}
+.gauge-label{font-size:8px;font-family:var(--mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;text-align:center}
+.gauge-svg{width:100%;max-width:130px}
+.gauge-val{font-size:17px;font-weight:700;letter-spacing:-.02em;text-align:center;margin-top:2px;transition:color .4s;color:var(--muted)}
+.gauge-val.ok{color:var(--g)}.gauge-val.hi{color:var(--r)}.gauge-val.lo{color:var(--b)}.gauge-val.wn{color:var(--y)}
+.gauge-unit{font-size:9px;font-family:var(--mono);color:var(--muted);text-align:center;margin-top:1px}
+.gauge-badge{font-size:8px;font-family:var(--mono);padding:2px 7px;border-radius:3px;margin-top:5px;display:inline-block}
+.bok{background:rgba(29,185,122,.1);color:var(--g)}
+.bhi{background:rgba(232,69,69,.1);color:var(--r)}
+.blo{background:rgba(58,143,232,.1);color:var(--b)}
+.bwn{background:rgba(240,165,0,.1);color:var(--y)}
+.boff{background:rgba(77,112,96,.1);color:var(--muted)}
+.gauge-minmax{display:flex;justify-content:space-between;width:100%;padding:0 4px;margin-top:2px}
+.gauge-minmax span{font-size:7px;font-family:var(--mono);color:var(--muted)}
+
+/* ── NIVEL TANQUE ESPECIAL ── */
+.tank-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px 12px;margin-bottom:12px}
+.tank-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tank-title{font-size:11px;font-weight:600;color:#e8f5ef}
+.tank-val-big{font-size:22px;font-weight:700;color:var(--b)}
+.tank-sub{font-size:9px;font-family:var(--mono);color:var(--muted)}
+.tank-bar-bg{height:22px;background:var(--card2);border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative}
+.tank-bar-fill{height:100%;border-radius:7px;transition:width 1s ease;position:relative;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.tank-bar-fill span{font-size:9px;font-family:var(--mono);color:var(--bg);font-weight:700}
+.tank-marks{display:flex;justify-content:space-between;padding:3px 2px 0;margin-top:2px}
+.tank-marks span{font-size:7px;font-family:var(--mono);color:var(--muted)}
+
+/* ── ACTUADORES ── */
+.section-title{font-size:8px;font-family:var(--mono);color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin:16px 0 8px}
+.act-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.act-row::-webkit-scrollbar{display:none}
+.act-pill{flex-shrink:0;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.act-pill.dim{opacity:.35;pointer-events:none}
+.act-pname{font-size:11px;font-weight:600;color:#e8f5ef}
+.act-psub{font-size:8px;font-family:var(--mono);color:var(--muted);margin-top:1px}
+.tog{position:relative;width:36px;height:20px;flex-shrink:0;cursor:pointer}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.ttr{position:absolute;inset:0;border-radius:10px;background:#1e3028;transition:background .2s}
+.tog input:checked~.ttr{background:var(--g)}
+.tth{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .18s}
+.tog input:checked~.tth{left:19px}
+.prow{display:flex;gap:4px;margin-top:6px}
+.pbtn{font-size:8px;font-family:var(--mono);padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+.pbtn:active{background:#1e3028}
+
+/* ── MODAL CLAVE ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.on{display:flex}
+.modal-box{background:#131f17;border:1px solid #1e3028;border-radius:16px;padding:28px 24px;width:100%;max-width:320px;text-align:center}
+.modal-icon{width:44px;height:44px;background:rgba(29,185,122,.1);border:1px solid rgba(29,185,122,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.modal-icon svg{width:20px;height:20px;fill:#1db97a}
+.modal-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+.modal-sub{font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:20px}
+.modal-inp{width:100%;background:#0f1a12;border:1px solid #1e3028;border-radius:8px;color:#fff;font-family:var(--mono);font-size:18px;padding:12px;text-align:center;letter-spacing:.3em;outline:none;margin-bottom:8px}
+.modal-inp:focus{border-color:#1db97a}
+.modal-err{font-size:9px;font-family:var(--mono);color:#e84545;height:14px;margin-bottom:10px}
+.modal-btns{display:flex;gap:8px}
+.modal-cancel{flex:1;padding:10px;border-radius:8px;border:1px solid #1e3028;background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;cursor:pointer}
+.modal-ok{flex:1;padding:10px;border-radius:8px;border:none;background:#1db97a;color:#0b110e;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer}
+.lock-badge{display:flex;align-items:center;gap:4px;font-size:8px;font-family:var(--mono);color:var(--muted);margin-top:2px}
+.lock-badge svg{width:9px;height:9px;fill:currentColor}
+.bbar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:8px 16px;z-index:98}
+.bbar-clock{font-size:9px;font-family:var(--mono);color:var(--muted)}
+.bbar-status{font-size:8px;font-family:var(--mono);color:var(--g)}
+.bbar-up{font-size:9px;font-family:var(--mono);color:var(--muted)}
+
+/* ── PANTALLA 2: GRÁFICAS ── */
+.tab-row{display:flex;padding:8px 14px 0;gap:2px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:53px;z-index:97;overflow-x:auto;scrollbar-width:none}
+.tab-row::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:6px 12px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font)}
+.tab.on{color:var(--g);border-color:var(--g)}
+.subpage{display:none;padding:14px 14px 80px}
+.subpage.on{display:block}
+
+/* CHART CARDS */
+.cc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 12px 10px;margin-bottom:10px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ct{font-size:11px;font-weight:600;color:#e8f5ef}
+.rbg{display:flex;gap:3px}
+.rb{font-size:8px;font-family:var(--mono);padding:3px 7px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+.rb.on{background:var(--g);border-color:var(--g);color:var(--bg)}
+canvas{display:block;width:100%!important;max-height:70px}
+.zleg{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.zi{display:flex;align-items:center;gap:4px;font-size:8px;font-family:var(--mono);color:var(--muted)}
+.zd{width:10px;height:3px;border-radius:2px}
+
+/* ZONAS CONFIG */
+.zcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.zrow{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.znm{font-size:10px;color:var(--text);min-width:100px}
+.zinp{background:var(--card2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 6px;width:52px;text-align:center;outline:none}
+.zinp:focus{border-color:var(--g)}
+.zsep{font-size:9px;color:var(--muted)}
+.savebtn{display:block;width:100%;margin-top:10px;padding:10px;border-radius:8px;background:var(--g);border:none;color:var(--bg);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer}
+
+/* ADMIN */
+.adcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0 14px}
+.adr{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.adr:last-child{border:none}
+.adn{font-size:11px;font-weight:600;color:#e8f5ef}
+.add{font-size:8px;font-family:var(--mono);color:var(--muted);margin-top:2px}
+.bhw{font-size:7px;font-family:var(--mono);padding:1px 5px;border-radius:3px;background:rgba(29,185,122,.1);color:var(--g);margin-top:2px;display:inline-block}
+.ibox{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:2.2;margin-top:10px}
+.iv{color:var(--text)}
+
+.zona-block{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.zona-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;font-weight:500;color:var(--text)}
+.ztoggle{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);cursor:pointer;font-weight:400}
+.zrow{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:10px}
+.zrow:last-child{border:none}
+.zlbl{color:var(--muted)}
+.zinp{display:flex;align-items:center;gap:3px;color:var(--muted);font-size:10px}
+.zfield{width:46px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px;text-align:center;font-family:var(--mono)}
+
+/* ── AUTH PIN ─────────────────────────────────────── */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;backdrop-filter:blur(4px)}
+.auth-card{background:#131f17;border:1px solid #1e3028;border-radius:16px;
+  padding:28px 24px;width:300px;text-align:center}
+.auth-title{font-size:15px;font-weight:500;color:#1db97a;margin-bottom:4px}
+.auth-sub{font-size:10px;color:#4d7060;margin-bottom:20px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #1e3028;
+  background:transparent;transition:background .15s}
+.pin-dot.filled{background:#1db97a;border-color:#1db97a}
+.pin-dot.error{background:#e84545;border-color:#e84545}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-btn{padding:14px;border-radius:10px;border:1px solid #1e3028;
+  background:#0b110e;color:#cce0d5;font-size:16px;cursor:pointer;
+  font-family:var(--mono);transition:background .1s}
+.pin-btn:active{background:#1e3028}
+.pin-btn.del{color:#4d7060;font-size:12px}
+.pin-error{font-size:10px;color:#e84545;margin-top:8px;min-height:16px}
+.auth-user{font-size:11px;color:#1db97a;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.auth-logout{font-size:10px;color:#4d7060;cursor:pointer;
+  margin-top:14px;text-decoration:underline}
+/* Motivo modal */
+.motivo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);
+  display:flex;align-items:center;justify-content:center;z-index:9998}
+.motivo-card{background:#131f17;border:1px solid #1e3028;border-radius:14px;
+  padding:20px;width:320px}
+.motivo-title{font-size:13px;color:#1db97a;margin-bottom:8px}
+.motivo-input{width:100%;padding:8px;border-radius:7px;
+  border:1px solid #1e3028;background:#0b110e;color:#cce0d5;
+  font-size:12px;font-family:var(--mono);resize:none;
+  box-sizing:border-box}
+.motivo-btns{display:flex;gap:8px;margin-top:10px}
+.motivo-btn{flex:1;padding:8px;border-radius:7px;border:1px solid #1e3028;
+  font-size:11px;cursor:pointer;font-family:var(--mono)}
+.motivo-ok{background:rgba(29,185,122,.15);color:#1db97a;border-color:rgba(29,185,122,.4)}
+.motivo-cancel{background:transparent;color:#4d7060}
+/* Log viewer */
+.log-table{width:100%;border-collapse:collapse;font-size:9px}
+.log-table th{background:#1e3028;padding:5px 6px;text-align:left;color:#4d7060;font-weight:500}
+.log-table td{padding:4px 6px;border-bottom:1px solid #1e3028;color:#cce0d5;vertical-align:top}
+.log-badge{font-size:8px;padding:1px 5px;border-radius:3px}
+.lb-admin{background:rgba(29,185,122,.15);color:#1db97a}
+.lb-oper{background:rgba(58,143,232,.15);color:#3a8fe8}
+.lb-ok{background:rgba(29,185,122,.1);color:#1db97a}
+.lb-fail{background:rgba(232,69,69,.1);color:#e84545}
+
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     PANTALLA 1 — DASHBOARD PRINCIPAL
+════════════════════════════════════════════ -->
+<div class="screen on" id="s-main">
+  <header>
+    <div class="logo">
+      <div class="lmark"><svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 5.5 5 10c0 3 1.5 5.5 4 7v2h6v-2c2.5-1.5 4-4 4-7 0-4.5-3-8-7-8zm-1 14v-4H9l4-8v4h2l-4 8z"/></svg></div>
+      <div><div class="lname">AeroControl</div><div class="lsub">ESP32-C3 · SHT30</div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="conn"><div class="cdot"></div><span id="cstat">simulando</span></div>
+      <button class="nav-btn" onclick="goScreen('s-hist')">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 8h18v2H3zm0 8h18v2H3z"/></svg>
+        Historial
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- FILA 1: Aire -->
+    <div class="section-title">ambiente · aire</div>
+    <div class="gauge-grid">
+      <div class="gauge-wrap" id="gw-taire">
+        <div class="gauge-label">Temp. Aire</div>
+        <svg class="gauge-svg" viewBox="0 0 120 70" id="gs-taire"></svg>
+        <div class="gauge-minmax"><span>0°</span><span>50°</span></div>
+        <div class="gauge-val" id="gv-taire">—</div>
+        <div class="gauge-unit">°C</div>
+        <div class="gauge-badge boff" id="gb-taire">cargando</div>
+      </div>
+      <div class="gauge-wrap" id="gw-hum">
+        <div class="gauge-label">Humedad</div>
+        <svg class="gauge-svg" viewBox="0 0 120 70" id="gs-hum"></svg>
+        <div class="gauge-minmax"><span>0%</span><span>100%</span></div>
+        <div class="gauge-val" id="gv-hum">—</div>
+        <div class="gauge-unit">%</div>
+        <div class="gauge-badge boff" id="gb-hum">cargando</div>
+      </div>
+    </div>
+
+    <!-- FILA 2: Agua -->
+    <div class="section-title">solución nutritiva · agua</div>
+    <div class="gauge-grid" id="grid-agua">
+      <div class="gauge-wrap" id="gw-ph">
+        <div class="gauge-label">pH</div>
+        <svg class="gauge-svg" viewBox="0 0 120 70" id="gs-ph"></svg>
+        <div class="gauge-minmax"><span>0</span><span>14</span></div>
+        <div class="gauge-val" id="gv-ph">—</div>
+        <div class="gauge-unit">pH</div>
+        <div class="gauge-badge boff" id="gb-ph">cargando</div>
+      </div>
+      <div class="gauge-wrap" id="gw-ec">
+        <div class="gauge-label">EC / TDS</div>
+        <svg class="gauge-svg" viewBox="0 0 120 70" id="gs-ec"></svg>
+        <div class="gauge-minmax"><span>0</span><span>5</span></div>
+        <div class="gauge-val" id="gv-ec">—</div>
+        <div class="gauge-unit">mS/cm</div>
+        <div class="gauge-badge boff" id="gb-ec">cargando</div>
+      </div>
+    </div>
+
+    <!-- TANQUE: NIVEL + T° AGUA -->
+    <div class="tank-wrap" id="tw-nivel">
+
+      <!-- FILA SUPERIOR: títulos y valores -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div class="tank-title">Tanque de solución</div>
+          <div class="tank-sub">Capacidad: 1000 L</div>
+        </div>
+        <div style="text-align:right;display:flex;gap:14px;align-items:flex-start">
+          <div>
+            <div class="tank-val-big" id="tv-litros">— L</div>
+            <div class="gauge-badge boff" id="tb-nivel" style="margin-top:2px">Nivel</div>
+          </div>
+          <div>
+            <div class="tank-val-big" id="tv-tagua2" style="color:var(--c)">—°C</div>
+            <div class="gauge-badge boff" id="tb-tagua2" style="margin-top:2px">T° Agua</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRA NIVEL -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-size:8px;font-family:var(--mono);color:var(--muted);min-width:38px">Nivel</div>
+        <div class="tank-bar-bg" style="flex:1">
+          <div class="tank-bar-fill" id="tf-bar" style="width:0%;background:var(--b)">
+            <span id="tf-pct"></span>
+          </div>
+        </div>
+        <div style="font-size:8px;font-family:var(--mono);color:var(--muted);min-width:28px;text-align:right" id="tf-pct-ext">—%</div>
+      </div>
+      <div class="tank-marks" style="padding-left:46px;margin-bottom:10px">
+        <span>0</span><span>250</span><span>500</span><span>750</span><span>1000 L</span>
+      </div>
+
+      <!-- BARRA T° AGUA (5°C a 50°C, óptimo 18–22°C) -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:8px;font-family:var(--mono);color:var(--muted);min-width:38px">T° Agua</div>
+        <div style="flex:1;position:relative">
+          <!-- Zonas de color en el fondo -->
+          <div style="height:22px;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative;background:#1e3028">
+            <!-- zona fría: 5–18°C = 0–28.9% -->
+            <div style="position:absolute;left:0;top:0;width:28.9%;height:100%;background:rgba(58,143,232,.35)"></div>
+            <!-- zona óptima: 18–22°C = 28.9–37.8% -->
+            <div style="position:absolute;left:28.9%;top:0;width:8.9%;height:100%;background:rgba(29,185,122,.45)"></div>
+            <!-- zona caliente: 22–50°C = 37.8–100% -->
+            <div style="position:absolute;left:37.8%;top:0;width:62.2%;height:100%;background:rgba(232,69,69,.25)"></div>
+            <!-- marcador óptimo izq -->
+            <div style="position:absolute;left:28.9%;top:0;width:1.5px;height:100%;background:#1db97a;opacity:.8"></div>
+            <!-- marcador óptimo der -->
+            <div style="position:absolute;left:37.8%;top:0;width:1.5px;height:100%;background:#1db97a;opacity:.8"></div>
+            <!-- aguja temperatura -->
+            <div id="tagua-needle" style="position:absolute;top:3px;width:4px;height:16px;background:#fff;border-radius:2px;transform:translateX(-50%);transition:left 1s ease;left:50%"></div>
+          </div>
+          <!-- escala debajo -->
+          <div style="display:flex;justify-content:space-between;padding:2px 0 0;font-size:7px;font-family:var(--mono);color:var(--muted)">
+            <span>5°C</span><span style="color:var(--g);font-weight:500">18°</span><span style="color:var(--g);font-weight:500">22°</span><span>35°</span><span>50°C</span>
+          </div>
+        </div>
+        <div style="font-size:9px;font-family:var(--mono);min-width:28px;text-align:right;transition:color .4s" id="tagua-bar-val">—</div>
+      </div>
+
+    </div>
+
+    <!-- ACTUADORES -->
+    <div class="section-title">control rápido</div>
+    <div class="act-row">
+      <div class="act-pill">
+        <div>
+          <div class="act-pname">Bomba</div>
+          <div class="act-psub">Nebulización</div>
+          <div class="prow">
+            <button class="pbtn" onclick="pls('bm',15)">15s</button>
+            <button class="pbtn" onclick="pls('bm',30)">30s</button>
+            <button class="pbtn" onclick="pls('bm',60)">60s</button>
+          </div>
+        </div>
+        <label class="tog"><input type="checkbox" id="tg-bm" onchange="act('bm',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="act-pill">
+        <div>
+          <div class="act-pname">LED</div>
+          <div class="act-psub">Fotoperíodo</div>
+          <div class="prow" style="margin-top:6px">
+            <input type="range" min="0" max="255" value="200" step="1" style="width:80px;accent-color:var(--g)" oninput="ledsl(this)">
+            <span style="font-size:8px;font-family:var(--mono);color:var(--muted)" id="lpct">78%</span>
+          </div>
+        </div>
+        <label class="tog"><input type="checkbox" id="tg-led" onchange="act('led',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="act-pill" id="ap-pA">
+        <div>
+          <div class="act-pname">Peri A</div>
+          <div class="act-psub">Sol. A</div>
+          <div class="prow"><button class="pbtn" onclick="pls('pA',5)">5s</button><button class="pbtn" onclick="pls('pA',10)">10s</button></div>
+        </div>
+        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="act-pill" id="ap-pB">
+        <div>
+          <div class="act-pname">Peri B</div>
+          <div class="act-psub">Sol. B</div>
+          <div class="prow"><button class="pbtn" onclick="pls('pB',5)">5s</button><button class="pbtn" onclick="pls('pB',10)">10s</button></div>
+        </div>
+        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="act-pill" id="ap-pPH">
+        <div>
+          <div class="act-pname">Peri pH</div>
+          <div class="act-psub">Corrector</div>
+          <div class="prow"><button class="pbtn" onclick="pls('pPH',2)">2s</button><button class="pbtn" onclick="pls('pPH',5)">5s</button></div>
+        </div>
+        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+    </div>
+
+  </main>
+  <div class="bbar">
+    <span class="bbar-clock" id="bclk">--:--:--</span>
+    <span class="bbar-status" id="bst">● simulando</span>
+    <span class="bbar-up" id="bup">up: 0h 0m</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PANTALLA 2 — HISTORIAL Y CONFIGURACIÓN
+════════════════════════════════════════════ -->
+<div class="screen" id="s-hist">
+  <header>
+    <div class="logo">
+      <div class="lmark"><svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 5.5 5 10c0 3 1.5 5.5 4 7v2h6v-2c2.5-1.5 4-4 4-7 0-4.5-3-8-7-8zm-1 14v-4H9l4-8v4h2l-4 8z"/></svg></div>
+      <div><div class="lname">AeroControl</div><div class="lsub">Historial y configuración</div></div>
+    </div>
+    <button class="nav-btn on" onclick="goScreen('s-main')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Dashboard
+    </button>
+  </header>
+
+  <div class="tab-row">
+    <button class="tab on" onclick="stab('graf',0)">Gráficas</button>
+    <button class="tab"    onclick="stab('zona',1)">Zonas</button>
+    <button class="tab"    onclick="reqAdmin()">Admin 🔒</button>
+  </div>
+
+  <!-- GRÁFICAS — layout compacto, todo visible sin scroll excesivo -->
+  <div class="subpage on" id="sp-graf">
+
+    <!-- selector de rango global -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:9px;font-family:var(--mono);color:var(--muted)">Período</div>
+      <div class="rbg">
+        <button class="rb on"  onclick="rngAll(this,36)">3h</button>
+        <button class="rb"     onclick="rngAll(this,144)">12h</button>
+        <button class="rb"     onclick="rngAll(this,288)">24h</button>
+      </div>
+    </div>
+
+    <!-- FILA 1: Temp + Humedad (2 columnas) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div class="cc" style="padding:8px 8px 6px;margin:0">
+        <div class="ch" style="margin-bottom:4px">
+          <div class="ct" style="font-size:10px">Temp. Aire</div>
+          <div style="font-size:8px;font-family:var(--mono);color:var(--muted)" id="ht-last">—</div>
+        </div>
+        <div style="position:relative;height:65px"><canvas id="cv-th"></canvas></div>
+        <div class="zleg" style="margin-top:4px">
+          <div class="zi"><div class="zd" style="background:var(--b)"></div>&lt;18°</div>
+          <div class="zi"><div class="zd" style="background:var(--g)"></div>18–28°</div>
+          <div class="zi"><div class="zd" style="background:var(--r)"></div>&gt;28°</div>
+        </div>
+      </div>
+      <div class="cc" style="padding:8px 8px 6px;margin:0">
+        <div class="ch" style="margin-bottom:4px">
+          <div class="ct" style="font-size:10px">Humedad</div>
+          <div style="font-size:8px;font-family:var(--mono);color:var(--muted)" id="hh-last">—</div>
+        </div>
+        <div style="position:relative;height:65px"><canvas id="cv-hh"></canvas></div>
+        <div class="zleg" style="margin-top:4px">
+          <div class="zi"><div class="zd" style="background:var(--y)"></div>&lt;50%</div>
+          <div class="zi"><div class="zd" style="background:var(--g)"></div>50–80%</div>
+          <div class="zi"><div class="zd" style="background:var(--r)"></div>&gt;80%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 2: pH + EC (2 columnas) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div class="cc" id="cc-ph" style="padding:8px 8px 6px;margin:0">
+        <div class="ch" style="margin-bottom:4px">
+          <div class="ct" style="font-size:10px">pH</div>
+          <div style="font-size:8px;font-family:var(--mono);color:var(--muted)" id="hph-last">—</div>
+        </div>
+        <div style="position:relative;height:65px"><canvas id="cv-phh"></canvas></div>
+        <div class="zleg" style="margin-top:4px">
+          <div class="zi"><div class="zd" style="background:var(--g)"></div>5.5–6.5</div>
+        </div>
+      </div>
+      <div class="cc" id="cc-ec" style="padding:8px 8px 6px;margin:0">
+        <div class="ch" style="margin-bottom:4px">
+          <div class="ct" style="font-size:10px">EC</div>
+          <div style="font-size:8px;font-family:var(--mono);color:var(--muted)" id="hec-last">—</div>
+        </div>
+        <div style="position:relative;height:65px"><canvas id="cv-ech"></canvas></div>
+        <div class="zleg" style="margin-top:4px">
+          <div class="zi"><div class="zd" style="background:var(--g)"></div>1.0–2.5</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 3: Nivel tanque (ancho completo) -->
+    <div class="cc" id="cc-nivel" style="padding:8px 8px 6px;margin-bottom:8px">
+      <div class="ch" style="margin-bottom:4px">
+        <div class="ct" style="font-size:10px">Nivel Tanque</div>
+        <div style="font-size:8px;font-family:var(--mono);color:var(--muted)" id="hn-last">—</div>
+      </div>
+      <div style="position:relative;height:55px"><canvas id="cv-nivelh"></canvas></div>
+      <div class="zleg" style="margin-top:4px">
+        <div class="zi"><div class="zd" style="background:var(--r)"></div>&lt;200 L crítico</div>
+        <div class="zi"><div class="zd" style="background:var(--b)"></div>200–1000 L</div>
+      </div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#e8f5ef">Alertas WhatsApp</div>
+        <div style="font-size:8px;font-family:var(--mono);color:var(--g);background:rgba(29,185,122,.1);padding:2px 7px;border-radius:4px">via CallMeBot</div>
+      </div>
+
+      <!-- Número y clave API -->
+      <div style="margin-bottom:8px">
+        <div style="font-size:8px;font-family:var(--mono);color:var(--muted);margin-bottom:3px">Número WhatsApp (con código país)</div>
+        <input id="wa-num" type="tel" placeholder="+5491112345678" style="width:100%;background:#0f1a12;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 9px;outline:none">
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:8px;font-family:var(--mono);color:var(--muted);margin-bottom:3px">API Key CallMeBot</div>
+        <input id="wa-key" type="text" placeholder="123456" style="width:100%;background:#0f1a12;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 9px;outline:none">
+      </div>
+
+      <!-- Toggles de alertas por sensor -->
+      <div style="font-size:8px;font-family:var(--mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">alertar cuando salga del rango óptimo</div>
+
+      <div id="alert-rows">
+        <!-- se genera con JS -->
+      </div>
+
+      <!-- Botones -->
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="testWA()" style="flex:1;padding:8px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:var(--mono);font-size:10px;cursor:pointer">Enviar prueba</button>
+        <button onclick="saveWA()" style="flex:1;padding:8px;border-radius:7px;border:none;background:var(--g);color:var(--bg);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer">Guardar</button>
+      </div>
+      <div style="font-size:8px;font-family:var(--mono);color:var(--muted);margin-top:8px;line-height:1.7">
+        📋 Obtené tu API key gratis: enviá "<b style="color:var(--text)">I allow callmebot to send me messages</b>" al +34 644 52 74 29 por WhatsApp. En minutos te llega tu key.
+      </div>
+      <div id="wa-status" style="font-size:9px;font-family:var(--mono);color:var(--g);margin-top:6px;min-height:14px"></div>
+    </div>
+
+  </div>
+
+  <!-- ZONAS -->
+  <div class="subpage" id="sp-zona">
+    <div class="section-title" style="margin-top:0">rangos óptimos</div>
+    <div class="zcard">
+      <div class="zrow"><span class="znm">Temp. Aire</span><input class="zinp" type="number" id="ztL" value="18" step=".5"><span class="zsep">—</span><input class="zinp" type="number" id="ztH" value="28" step=".5"><span class="zsep">°C</span></div>
+      <div class="zrow"><span class="znm">Humedad</span><input class="zinp" type="number" id="zhL" value="50" step="1"><span class="zsep">—</span><input class="zinp" type="number" id="zhH" value="80" step="1"><span class="zsep">%</span></div>
+      <div class="zrow"><span class="znm">pH</span><input class="zinp" type="number" id="zpL" value="5.5" step=".1"><span class="zsep">—</span><input class="zinp" type="number" id="zpH" value="6.5" step=".1"><span class="zsep">pH</span></div>
+      <div class="zrow"><span class="znm">EC</span><input class="zinp" type="number" id="zeL" value="1.0" step=".1"><span class="zsep">—</span><input class="zinp" type="number" id="zeH" value="2.5" step=".1"><span class="zsep">mS</span></div>
+      <div class="zrow"><span class="znm">T° Agua óptima</span><input class="zinp" type="number" id="zwaL" value="18" step=".5"><span class="zsep">—</span><input class="zinp" type="number" id="zwaH" value="22" step=".5"><span class="zsep">°C</span></div>
+      <div class="zrow"><span class="znm">Nivel mínimo</span><input class="zinp" type="number" id="znMin" value="200" step="50"><span class="zsep" style="font-size:8px">litros</span></div>
+      <button class="savebtn" onclick="saveZ()">Guardar en ESP32</button>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="subpage" id="sp-adm">
+    <div class="section-title" style="margin-top:0">módulos de hardware</div>
+    <div class="adcard">
+      <div class="adr">
+        <div><div class="adn">SHT30 — Temp Aire + Humedad</div><div class="add">I2C 0x44 · SDA=GPIO6 SCL=GPIO7</div><div class="bhw">conectado ✓</div></div>
+        <label class="tog"><input type="checkbox" checked disabled><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="adr">
+        <div><div class="adn">ADS1115 — pH + EC + T°Agua</div><div class="add">I2C 0x48 · ADC 16-bit</div></div>
+        <label class="tog"><input type="checkbox" id="mod-ads" onchange="enMod(this.checked,['gw-ph','gw-ec','gw-tagua'],['cc-ph','cc-ec'])"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="adr">
+        <div><div class="adn">Sensor Nivel Tanque</div><div class="add">Ultrasonido / flotador · 0–1000 L</div></div>
+        <label class="tog"><input type="checkbox" id="mod-nivel" onchange="enNivel(this.checked)"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="adr">
+        <div><div class="adn">DS3231 — RTC</div><div class="add">I2C 0x68 · timestamps reales</div></div>
+        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="adr">
+        <div><div class="adn">Peristáltica A</div><div class="add">GPIO4 · solución A</div></div>
+        <label class="tog"><input type="checkbox" onchange="enAct('ap-pA',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="adr">
+        <div><div class="adn">Peristáltica B</div><div class="add">GPIO5 · solución B</div></div>
+        <label class="tog"><input type="checkbox" onchange="enAct('ap-pB',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+      <div class="adr">
+        <div><div class="adn">Peristáltica pH</div><div class="add">GPIO10 · corrector pH</div></div>
+        <label class="tog"><input type="checkbox" onchange="enAct('ap-pPH',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+  <button onclick="showIPModal()" style="width:100%;padding:9px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:var(--mono);font-size:11px;cursor:pointer">
+    Cambiar IP del ESP32
+  </button>
+</div>
+<!-- Admin Zonas -->
+<div id="admin-zonas">
+
+  <!-- ESTADO RELÉS -->
+  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Estado relés</div>
+  <div id="relay-panel" style="margin-bottom:14px;font-size:11px;color:var(--muted)">Conectando...</div>
+
+  <!-- ZONA TEMPERATURA -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🌡 Temperatura</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-temp" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Caloventor ON si T° &lt;</span>
+      <div class="zinp"><input id="cfg-tempCalorOn" type="number" step="0.5" value="20" class="zfield"> °C</div></div>
+    <div class="zrow"><span class="zlbl">Caloventor OFF si T° &gt;</span>
+      <div class="zinp"><input id="cfg-tempCalorOff" type="number" step="0.5" value="22" class="zfield"> °C</div></div>
+    <div class="zrow"><span class="zlbl">Ventilador ON si T° &gt;</span>
+      <div class="zinp"><input id="cfg-tempVentOn" type="number" step="0.5" value="25" class="zfield"> °C</div></div>
+    <div class="zrow"><span class="zlbl">Ventilador OFF si T° &lt;</span>
+      <div class="zinp"><input id="cfg-tempVentOff" type="number" step="0.5" value="23" class="zfield"> °C</div></div>
+  </div>
+
+  <!-- ZONA GERMINACIÓN -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🌱 Riego germinación</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-germ" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Duración</span>
+      <div class="zinp"><input id="cfg-germDur" type="number" min="1" max="60" value="3" class="zfield"> min</div></div>
+    <div class="zrow"><span class="zlbl">Riego 1</span>
+      <div class="zinp"><input id="cfg-germH1" type="number" min="0" max="23" value="8" class="zfield"> :00 h</div></div>
+    <div class="zrow"><span class="zlbl">Riego 2</span>
+      <div class="zinp"><input id="cfg-germH2" type="number" min="0" max="23" value="20" class="zfield"> :00 h</div></div>
+  </div>
+
+  <!-- ZONA TORRES -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🏗 Riego torres</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-torre" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Duración por ciclo</span>
+      <div class="zinp"><input id="cfg-torreDur" type="number" min="1" max="60" value="2" class="zfield"> min</div></div>
+    <div class="zrow"><span class="zlbl">Intervalo entre riegos</span>
+      <div class="zinp"><input id="cfg-torreInt" type="number" min="1" max="120" value="10" class="zfield"> min</div></div>
+  </div>
+
+  <!-- ZONA LUCES -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>💡 Luces full spectrum</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-luz" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Encender</span>
+      <div class="zinp"><input id="cfg-luzOn" type="number" min="0" max="23" value="6" class="zfield"> :00 h</div></div>
+    <div class="zrow"><span class="zlbl">Apagar</span>
+      <div class="zinp"><input id="cfg-luzOff" type="number" min="0" max="23" value="22" class="zfield"> :00 h</div></div>
+    <div class="zrow"><span class="zlbl">Horas de luz</span>
+      <div id="luz-horas" style="font-size:11px;color:#1db97a">16 horas</div></div>
+  </div>
+
+  <!-- ZONA pH -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🧪 Corrección pH</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-ph" onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">pH objetivo</span>
+      <div class="zinp"><input id="cfg-phTarget" type="number" step="0.1" value="6.2" class="zfield"></div></div>
+    <div class="zrow"><span class="zlbl">Banda tolerancia ±</span>
+      <div class="zinp"><input id="cfg-phBanda" type="number" step="0.1" value="0.2" class="zfield"></div></div>
+    <div class="zrow"><span class="zlbl">Pulso corrector</span>
+      <div class="zinp"><input id="cfg-phPulso" type="number" min="1" max="30" value="3" class="zfield"> seg</div></div>
+  </div>
+
+  <!-- ZONA ALERTAS -->
+  <div class="zona-block">
+    <div class="zona-hd"><span>🔔 Umbrales de alerta</span></div>
+    <div class="zrow"><span class="zlbl">Temp mín / máx</span>
+      <div class="zinp">
+        <input id="cfg-alertTL" type="number" value="15" class="zfield" style="width:40px"> /
+        <input id="cfg-alertTH" type="number" value="30" class="zfield" style="width:40px"> °C
+      </div></div>
+    <div class="zrow"><span class="zlbl">Humedad mín / máx</span>
+      <div class="zinp">
+        <input id="cfg-alertHL" type="number" value="40" class="zfield" style="width:40px"> /
+        <input id="cfg-alertHH" type="number" value="85" class="zfield" style="width:40px"> %
+      </div></div>
+    <div class="zrow"><span class="zlbl">Nivel mínimo tanque</span>
+      <div class="zinp"><input id="cfg-alertNL" type="number" value="100" class="zfield"> L</div></div>
+  </div>
+
+  <button id="btn-savecfg" onclick="saveCfg()" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(29,185,122,.4);background:rgba(29,185,122,.1);color:#1db97a;font-size:12px;cursor:pointer;margin-bottom:10px">
+    Guardar configuración
+  </button>
+
+</div>
+
+<div style="margin-bottom:12px">
+  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Automatizaciones</div>
+
+  <!-- Caloventor -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">🔥 Caloventor</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-calor" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Encender bajo <input id="cfg-tempOn" type="number" step="0.5" value="20" style="width:50px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> °C</div>
+      <div>Apagar sobre <input id="cfg-tempOff" type="number" step="0.5" value="22" style="width:50px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> °C</div>
+    </div>
+  </div>
+
+  <!-- Germinación -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">💧 Bomba germinación</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-germ" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Duración <input id="cfg-germDur" type="number" min="1" max="60" value="3" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> min</div>
+      <div>Riego 1 <input id="cfg-germH1" type="number" min="0" max="23" value="8" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+      <div>Riego 2 <input id="cfg-germH2" type="number" min="0" max="23" value="20" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+    </div>
+  </div>
+
+  <!-- Torres -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">💧 Bomba torres</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-torre" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Duración <input id="cfg-torreDur" type="number" min="1" max="60" value="2" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> min</div>
+      <div>Cada <input id="cfg-torreInt" type="number" min="1" max="120" value="10" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> min</div>
+    </div>
+  </div>
+
+  <!-- Luces -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">💡 Luces full spectrum</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-luz" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Encender <input id="cfg-luzOn" type="number" min="0" max="23" value="6" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+      <div>Apagar <input id="cfg-luzOff" type="number" min="0" max="23" value="22" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+    </div>
+  </div>
+
+  <button id="btn-savecfg" onclick="saveCfg()" style="width:100%;padding:9px;border-radius:7px;border:1px solid rgba(29,185,122,.4);background:rgba(29,185,122,.1);color:#1db97a;font-size:11px;cursor:pointer;font-family:var(--mono)">
+    Guardar configuración
+  </button>
+
+  <!-- PANEL LOGS — solo admin -->
+  <div style="margin-top:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Registro de cambios</div>
+      <button onclick="showLogs()" style="font-size:9px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">Ver log</button>
+    </div>
+    <div id="log-panel" style="font-size:9px;color:var(--muted)">Presioná "Ver log" (requiere admin)</div>
+  </div>
+
+</div>
+
+<div class="ibox">
+      <div>Modo: <span class="iv">DEMO · datos simulados</span></div>
+      <div>Bus I2C: <span class="iv">SDA=GPIO6 · SCL=GPIO7</span></div>
+      <div>WebSocket: <span class="iv">puerto 81 (ESP32 real)</span></div>
+      <div>API: <span class="iv">/api/status · /api/history</span></div>
+    </div>
+  </div>
+
+  <div class="bbar">
+    <span class="bbar-clock" id="bclk2">--:--:--</span>
+    <span class="bbar-status">● AeroControl v2</span>
+    <span class="bbar-up" id="bup2">up: —</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script>
+// ── ZONAS ────────────────────────────────────────────────
+var Z={tL:18,tH:28,hL:50,hH:80,phL:5.5,phH:6.5,ecL:1,ecH:2.5,waL:18,waH:22,nMin:200};
+
+// ── GAUGE SVG ─────────────────────────────────────────────
+// Arco de 220° centrado abajo. min=-110° max=+110° desde las 6
+function describeArc(cx,cy,r,startDeg,endDeg){
+  var s=startDeg*Math.PI/180, e=endDeg*Math.PI/180;
+  var x1=cx+r*Math.cos(s), y1=cy+r*Math.sin(s);
+  var x2=cx+r*Math.cos(e), y2=cy+r*Math.sin(e);
+  var large=endDeg-startDeg>180?1:0;
+  return 'M'+x1+' '+y1+' A'+r+' '+r+' 0 '+large+' 1 '+x2+' '+y2;
+}
+
+// Ángulo: mapea valor→ángulo en el arco de 220°
+// El arco va de 145° a 35° (sentido horario pasando por abajo=225° equiv)
+// Usamos: start=145°, end=395° (=35°+360), arco de 250°
+var ARC_START=145, ARC_TOTAL=250;
+function valToAngle(val,min,max){
+  var pct=Math.max(0,Math.min(1,(val-min)/(max-min)));
+  return ARC_START + pct*ARC_TOTAL;
+}
+
+function buildGauge(svgId, min, max, optLo, optHi, colorLo, colorOk, colorHi){
+  var svg=document.getElementById(svgId);
+  if(!svg)return;
+  var cx=60,cy=58,r=46,rt=38,rn=28;
+
+  // Fondo track
+  var arcEnd=ARC_START+ARC_TOTAL;
+  var bg=document.createElementNS('http://www.w3.org/2000/svg','path');
+  bg.setAttribute('d',describeArc(cx,cy,r,ARC_START,arcEnd));
+  bg.setAttribute('stroke','#1e3028');bg.setAttribute('stroke-width','8');
+  bg.setAttribute('fill','none');bg.setAttribute('stroke-linecap','round');
+  svg.appendChild(bg);
+
+  // Zona baja (min → optLo)
+  if(optLo>min){
+    var p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',describeArc(cx,cy,r,valToAngle(min,min,max),valToAngle(optLo,min,max)));
+    p.setAttribute('stroke',colorLo);p.setAttribute('stroke-width','8');
+    p.setAttribute('fill','none');p.setAttribute('stroke-linecap','round');p.setAttribute('opacity','0.7');
+    svg.appendChild(p);
+  }
+  // Zona óptima (optLo → optHi)
+  var pok=document.createElementNS('http://www.w3.org/2000/svg','path');
+  pok.setAttribute('d',describeArc(cx,cy,r,valToAngle(optLo,min,max),valToAngle(optHi,min,max)));
+  pok.setAttribute('stroke',colorOk);pok.setAttribute('stroke-width','8');
+  pok.setAttribute('fill','none');pok.setAttribute('stroke-linecap','round');pok.setAttribute('opacity','0.7');
+  svg.appendChild(pok);
+  // Zona alta (optHi → max)
+  if(optHi<max){
+    var phi=document.createElementNS('http://www.w3.org/2000/svg','path');
+    phi.setAttribute('d',describeArc(cx,cy,r,valToAngle(optHi,min,max),valToAngle(max,min,max)));
+    phi.setAttribute('stroke',colorHi);phi.setAttribute('stroke-width','8');
+    phi.setAttribute('fill','none');phi.setAttribute('stroke-linecap','round');phi.setAttribute('opacity','0.7');
+    svg.appendChild(phi);
+  }
+
+  // Aguja (needle) — se actualiza después
+  var needle=document.createElementNS('http://www.w3.org/2000/svg','line');
+  needle.setAttribute('x1',cx);needle.setAttribute('y1',cy);
+  needle.setAttribute('stroke','#ffffff');needle.setAttribute('stroke-width','2');
+  needle.setAttribute('stroke-linecap','round');needle.setAttribute('id',svgId+'-needle');
+  svg.appendChild(needle);
+
+  // Centro del gauge
+  var dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);dot.setAttribute('r','4');
+  dot.setAttribute('fill','#1e3028');dot.setAttribute('stroke','#4d7060');dot.setAttribute('stroke-width','1.5');
+  svg.appendChild(dot);
+
+  // Marcas mín, óptimo, máx
+  function addTick(val,color){
+    var ang=valToAngle(val,min,max)*Math.PI/180;
+    var x1=cx+(r-12)*Math.cos(ang),y1=cy+(r-12)*Math.sin(ang);
+    var x2=cx+r*Math.cos(ang),y2=cy+r*Math.sin(ang);
+    var t=document.createElementNS('http://www.w3.org/2000/svg','line');
+    t.setAttribute('x1',x1);t.setAttribute('y1',y1);t.setAttribute('x2',x2);t.setAttribute('y2',y2);
+    t.setAttribute('stroke',color);t.setAttribute('stroke-width','1.5');
+    svg.insertBefore(t,needle);
+  }
+  addTick(optLo,'#1db97a');addTick(optHi,'#1db97a');
+}
+
+function updateNeedle(svgId, val, min, max){
+  var needle=document.getElementById(svgId+'-needle');
+  if(!needle)return;
+  var ang=valToAngle(val,min,max)*Math.PI/180;
+  var cx=60,cy=58,r=36;
+  needle.setAttribute('x2', cx+r*Math.cos(ang));
+  needle.setAttribute('y2', cy+r*Math.sin(ang));
+}
+
+// Construir todos los gauges
+setTimeout(function(){
+  buildGauge('gs-taire',0,50,18,28,'#3a8fe8','#1db97a','#e84545');
+  buildGauge('gs-hum',0,100,50,80,'#f0a500','#1db97a','#e84545');
+  buildGauge('gs-ph',0,14,5.5,6.5,'#f0a500','#1db97a','#e84545');
+  buildGauge('gs-ec',0,5,1.0,2.5,'#f0a500','#1db97a','#e84545');
+},100);
+
+// ── HISTORIAL ────────────────────────────────────────────
+var histT=[],histH=[],histNivel=[],histPH=[],histEC=[];
+var now0=Date.now();
+for(var i=288;i>=0;i--){
+  var ts=new Date(now0-i*300000);
+  var hr=ts.getHours()+ts.getMinutes()/60;
+  var t=22+3*Math.sin((hr-6)*Math.PI/12)+(Math.random()-.5)*1.2;
+  var h=68-8*Math.sin((hr-6)*Math.PI/12)+(Math.random()-.5)*4;
+  var nv=650+80*Math.sin(i/30)+(Math.random()-.5)*20;
+  var ph=6.1+0.4*Math.sin(i/40)+(Math.random()-.5)*.1;
+  var ec=1.8+0.3*Math.cos(i/50)+(Math.random()-.5)*.08;
+  histT.push({x:ts,y:parseFloat(t.toFixed(1))});
+  histH.push({x:ts,y:parseFloat(h.toFixed(0))});
+  histNivel.push({x:ts,y:parseFloat(nv.toFixed(0))});
+  histPH.push({x:ts,y:parseFloat(ph.toFixed(2))});
+  histEC.push({x:ts,y:parseFloat(ec.toFixed(2))});
+}
+
+// ── CHARTS ───────────────────────────────────────────────
+function zp(lo,hi,yMin,yMax,cLo,cOk,cHi){
+  return{id:'zp'+Math.random(),beforeDraw:function(ch){
+    var ctx=ch.ctx,a=ch.chartArea,ys=ch.scales.y;
+    if(!a)return;
+    ctx.save();
+    ctx.fillStyle=cHi;ctx.fillRect(a.left,a.top,a.right-a.left,ys.getPixelForValue(hi)-a.top);
+    ctx.fillStyle=cOk;ctx.fillRect(a.left,ys.getPixelForValue(hi),a.right-a.left,ys.getPixelForValue(lo)-ys.getPixelForValue(hi));
+    ctx.fillStyle=cLo;ctx.fillRect(a.left,ys.getPixelForValue(lo),a.right-a.left,a.bottom-ys.getPixelForValue(lo));
+    ctx.restore();
+  }};
+}
+Chart.defaults.color='#4d7060';Chart.defaults.borderColor='#1e3028';
+
+function mkChart(id,plugin,yMin,yMax,color){
+  var el=document.getElementById(id);if(!el)return null;
+  return new Chart(el,{
+    type:'line',
+    data:{datasets:[{data:[],borderColor:color,borderWidth:1.8,fill:false,tension:0.4,pointRadius:0,pointHoverRadius:3}]},
+    options:{animation:false,responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#131f17',borderColor:'#1e3028',borderWidth:1,
+        callbacks:{label:function(c){return ' '+c.parsed.y.toFixed(1);}}}},
+      scales:{
+        x:{type:'time',time:{unit:'minute',displayFormats:{minute:'HH:mm'}},grid:{display:false},
+           ticks:{maxTicksLimit:3,font:{size:7},color:'#4d7060'}},
+        y:{min:yMin,max:yMax,grid:{color:'rgba(30,48,40,.5)',lineWidth:0.5},
+           ticks:{font:{size:7},color:'#4d7060',maxTicksLimit:4}}
+      }
+    },plugins:plugin?[plugin]:[]
+  });
+}
+
+var cTH,cHH,cPHH,cECH,cNH;
+setTimeout(function(){
+  cTH=mkChart('cv-th', zp(18,28,5,45,'rgba(58,143,232,.12)','rgba(29,185,122,.14)','rgba(232,69,69,.12)'),5,45,'#1db97a');
+  cHH=mkChart('cv-hh', zp(50,80,15,105,'rgba(240,165,0,.12)','rgba(29,185,122,.14)','rgba(232,69,69,.12)'),15,105,'#3a8fe8');
+  cPHH=mkChart('cv-phh',zp(5.5,6.5,0,14,'rgba(240,165,0,.12)','rgba(29,185,122,.14)','rgba(232,69,69,.12)'),0,14,'#00c8e0');
+  cECH=mkChart('cv-ech',zp(1,2.5,0,5,'rgba(240,165,0,.12)','rgba(29,185,122,.14)','rgba(232,69,69,.12)'),0,5,'#f0a500');
+  cNH =mkChart('cv-nivelh',null,0,1100,'#3a8fe8');
+  upd(cTH,histT.slice(-36)); upd(cHH,histH.slice(-36));
+  upd(cNH,histNivel.slice(-36));
+},500);
+
+function upd(ch,data){if(!ch)return;ch.data.datasets[0].data=data;ch.update('none');}
+
+// ── KPI GAUGE UPDATE ─────────────────────────────────────
+function setGauge(id,val,dec,min,max,lo,hi){
+  var kv=document.getElementById('gv-'+id);
+  var kb=document.getElementById('gb-'+id);
+  var kw=document.getElementById('gw-'+id);
+  if(!kv)return;
+  kv.textContent=val.toFixed(dec);
+  kw.className='gauge-wrap'; kv.className='gauge-val'; kb.className='gauge-badge';
+  if(val<lo){kw.classList.add('lo');kv.classList.add('lo');kb.classList.add('blo');kb.textContent='Baja';}
+  else if(val>hi){kw.classList.add('hi');kv.classList.add('hi');kb.classList.add('bhi');kb.textContent='Alta';}
+  else{kw.classList.add('ok');kv.classList.add('ok');kb.classList.add('bok');kb.textContent='Normal';}
+  updateNeedle('gs-'+id, val, min, max);
+}
+
+function setNivel(litros){
+  var pct=Math.max(0,Math.min(100,litros/1000*100));
+  var bar=document.getElementById('tf-bar');
+  var bpct=document.getElementById('tf-pct');
+  var bpctExt=document.getElementById('tf-pct-ext');
+  var lv=document.getElementById('tv-litros');
+  var badge=document.getElementById('tb-nivel');
+  if(bar){bar.style.width=pct+'%';if(bpct)bpct.textContent=Math.round(pct)+'%';}
+  if(bpctExt)bpctExt.textContent=Math.round(pct)+'%';
+  if(lv)lv.textContent=Math.round(litros)+' L';
+  var col=litros<200?'var(--r)':litros<400?'var(--y)':'var(--b)';
+  if(bar)bar.style.background=col;
+  if(badge){
+    badge.textContent=litros<200?'¡Bajo!':litros<400?'Bajo':'Normal';
+    badge.className='gauge-badge '+(litros<200?'bhi':litros<400?'bwn':'blo');
+  }
+}
+
+function setTaguaBar(val){
+  // Rango 5–50°C → posición 0–100%
+  var pct=Math.max(0,Math.min(100,(val-5)/(50-5)*100));
+  var needle=document.getElementById('tagua-needle');
+  var label=document.getElementById('tagua-bar-val');
+  var tv=document.getElementById('tv-tagua2');
+  var badge=document.getElementById('tb-tagua2');
+  if(needle)needle.style.left=pct+'%';
+  var optLo=18,optHi=22;
+  var col=val<optLo?'var(--b)':val>optHi?'var(--r)':'var(--g)';
+  if(label){label.textContent=val.toFixed(1)+'°';label.style.color=col;}
+  if(tv){tv.textContent=val.toFixed(1)+'°C';tv.style.color=col;}
+  if(badge){
+    badge.textContent=val<optLo?'Fría':val>optHi?'Caliente':'Óptima';
+    badge.className='gauge-badge '+(val<optLo?'blo':val>optHi?'bhi':'bok');
+  }
+}
+
+// ── SIMULACIÓN ───────────────────────────────────────────
+// ══ CONEXION AL ESP32 ══════════════════════════════════
+var ESP_IP   = localStorage.getItem('esp32_ip') || '';
+var ws, wsRetry, wsOk = false;
+
+// Modal para ingresar IP
+function showIPModal(msg) {
+  var saved = localStorage.getItem('esp32_ip') || '192.168.0.';
+  var ip = prompt(
+    (msg || '') + '\nIngresá la IP del ESP32:\n(la ves en el Monitor Serie)',
+    saved
+  );
+  if (ip && ip.trim()) {
+    ESP_IP = ip.trim();
+    localStorage.setItem('esp32_ip', ESP_IP);
+    connectESP();
+  }
+}
+
+function connectESP() {
+  if (!ESP_IP) { showIPModal(); return; }
+  var el_cstat = document.getElementById('cstat');
+  var el_iplbl = document.getElementById('ip-lbl');
+  if(el_cstat) el_cstat.textContent = 'conectando...';
+  if(el_iplbl) el_iplbl.textContent = ESP_IP;
+
+  // Primera lectura inmediata
+  pollESP();
+  // Polling cada 5 segundos (funciona desde HTTPS sin problemas)
+  if(window._pollTimer) clearInterval(window._pollTimer);
+  window._pollTimer = setInterval(pollESP, 5000);
+
+  // Historial al conectar
+  fetchHistory();
+}
+
+function espUrl(path) {
+  // Si estamos en HTTPS (GitHub Pages) usar proxy para evitar Mixed Content
+  // Si estamos en HTTP (red local directo) conectar directo
+  var base = 'http://' + ESP_IP;
+  if (location.protocol === 'https:') {
+    return 'https://corsproxy.io/?' + encodeURIComponent(base + path);
+  }
+  return base + path;
+}
+
+function pollESP() {
+  fetch(espUrl('/api/status'))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      wsOk = true;
+      var el_cstat = document.getElementById('cstat');
+      var el_bst   = document.getElementById('bst');
+      if(el_cstat) el_cstat.textContent = 'conectado';
+      if(el_bst)   el_bst.textContent   = '● ESP32 ' + ESP_IP;
+      onStatus(d);
+    })
+    .catch(function() {
+      wsOk = false;
+      var el_cstat = document.getElementById('cstat');
+      if(el_cstat) el_cstat.textContent = 'sin respuesta';
+    });
+}
+
+function fetchHistory() {
+  fetch(espUrl('/api/history'))
+    .then(function(r){ return r.json(); })
+    .then(function(h){ loadHistory(h); })
+    .catch(function(){});
+}
+
+// openWS queda como stub para no romper referencias
+function openWS() { connectESP(); }
+
+function onStatus(d) {
+  var now = new Date();
+  if(d.temp  !== undefined){ setGauge('taire',d.temp,1,0,50,Z.tL,Z.tH); pushH(histT,now,d.temp); }
+  if(d.hum   !== undefined){ setGauge('hum',d.hum,0,0,100,Z.hL,Z.hH); pushH(histH,now,d.hum); }
+  if(d.tAgua !== undefined && d.tAgua>0){ setGauge('tagua',d.tAgua,1,5,50,Z.waL,Z.waH); setTaguaBar(d.tAgua); }
+  if(d.ph    !== undefined && d.ph>0){ setGauge('ph',d.ph,2,0,14,Z.phL,Z.phH); pushH(histPH,now,d.ph); }
+  if(d.ec    !== undefined && d.ec>0){ setGauge('ec',d.ec,2,0,5,Z.ecL,Z.ecH); pushH(histEC,now,d.ec); }
+  if(d.nivel !== undefined){ setNivel(d.nivel); pushH(histNivel,now,d.nivel); }
+  if(d.uptime !== undefined){
+    var uh=Math.floor(d.uptime/3600),um=Math.floor((d.uptime%3600)/60),us=d.uptime%60;
+    var us2=uh+'h '+pad(um)+'m '+pad(us)+'s';
+    var e1=document.getElementById('bup'); if(e1)e1.textContent='up: '+us2;
+    var e2=document.getElementById('bup2'); if(e2)e2.textContent='up: '+us2;
+  }
+  if(d.time){
+    var ec=document.getElementById('bclk'); if(ec)ec.textContent=d.time;
+    var ec2=document.getElementById('bclk2'); if(ec2)ec2.textContent=d.time;
+  }
+  // Actualizar estado relés
+  if(d.relays) updateRelays(d.relays);
+  // Actualizar config si viene
+  if(d.cfg) updateCfgUI(d.cfg);
+  checkAlerts({t:d.temp||0,h:d.hum||0});
+}
+
+// ── CONTROL DE RELÉS ────────────────────────
+var RELAY_NAMES = ['Caloventor','B. Germin.','B. Torres','Luces','Perist. A','Perist. B'];
+var RELAY_ICONS = ['🔥','💧','💧','💡','🧪','🧪'];
+
+function updateRelays(relays) {
+  var cont = document.getElementById('relay-panel');
+  if(!cont) return;
+  cont.innerHTML = '';
+  relays.forEach(function(r, i) {
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+      'padding:8px 10px;margin:4px 0;border-radius:8px;' +
+      'background:' + (r.on ? 'rgba(29,185,122,.12)' : 'var(--card)') + ';' +
+      'border:1px solid ' + (r.on ? 'rgba(29,185,122,.3)' : 'var(--border)') + ';';
+    div.innerHTML =
+      '<span style="font-size:11px">' + RELAY_ICONS[i] + ' ' + RELAY_NAMES[i] +
+      (r.man ? ' <span style="font-size:9px;color:var(--muted)">[manual]</span>' : '') +
+      '</span>' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+      '<span style="font-size:10px;color:' + (r.on?'#1db97a':'var(--muted)') + '">' +
+      (r.on ? 'ON' : 'off') + '</span>' +
+      '<button onclick="toggleRelay(' + i + ',' + (!r.on) + ')" style="' +
+      'padding:3px 10px;border-radius:5px;border:1px solid var(--border);' +
+      'background:' + (r.on ? 'rgba(232,69,69,.15)' : 'rgba(29,185,122,.15)') + ';' +
+      'color:' + (r.on ? '#e84545' : '#1db97a') + ';font-size:10px;cursor:pointer">' +
+      (r.on ? 'Apagar' : 'Encender') + '</button></div>';
+    cont.appendChild(div);
+  });
+}
+
+function toggleRelay(idx, on) {
+  fetch(espUrl('/api/relay'), {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({idx:idx, on:on, manual:true, dur:0})
+  }).then(function(){ pollESP(); });
+}
+
+// ── CONFIG AUTOMATIZACIONES ──────────────────
+function gv(id,def){ var e=document.getElementById(id); return e?e.value:def; }
+function gb(id){ var e=document.getElementById(id); return e?e.checked:false; }
+function sv(id,v){ var e=document.getElementById(id); if(e&&e!==document.activeElement)e.value=v; }
+function sb(id,v){ var e=document.getElementById(id); if(e)e.checked=v; }
+
+function updateCfgUI(c) {
+  if(!c) return;
+  sv('cfg-tempCalorOn',c.tempCalorOn); sv('cfg-tempCalorOff',c.tempCalorOff);
+  sv('cfg-tempVentOn',c.tempVentOn);   sv('cfg-tempVentOff',c.tempVentOff);
+  sv('cfg-germDur',c.germDur); sv('cfg-germH1',c.germH1); sv('cfg-germH2',c.germH2);
+  sv('cfg-torreDur',c.torreDur); sv('cfg-torreInt',c.torreInt);
+  sv('cfg-luzOn',c.luzOn); sv('cfg-luzOff',c.luzOff);
+  sv('cfg-phTarget',c.phTarget); sv('cfg-phBanda',c.phBanda); sv('cfg-phPulso',c.phPulso);
+  sv('cfg-alertTL',c.alertTL); sv('cfg-alertTH',c.alertTH);
+  sv('cfg-alertHL',c.alertHL); sv('cfg-alertHH',c.alertHH);
+  sv('cfg-alertNL',c.alertNL);
+  sb('chk-temp',c.autoTemp); sb('chk-germ',c.autoGerm);
+  sb('chk-torre',c.autoTorre); sb('chk-luz',c.autoLuz); sb('chk-ph',c.autoPH);
+  // Calcular horas de luz
+  var on=parseInt(c.luzOn||6), off=parseInt(c.luzOff||22);
+  var h = off>on ? off-on : 24-(on-off);
+  var el=document.getElementById('luz-horas'); if(el) el.textContent=h+' horas';
+}
+
+function saveCfg() {
+  // Recalcular horas luz al guardar
+  var on=parseInt(gv('cfg-luzOn',6)), off=parseInt(gv('cfg-luzOff',22));
+  var h=off>on?off-on:24-(on-off);
+  var el=document.getElementById('luz-horas'); if(el)el.textContent=h+' horas';
+
+  var cfg = {
+    tempCalorOn:  parseFloat(gv('cfg-tempCalorOn',20)),
+    tempCalorOff: parseFloat(gv('cfg-tempCalorOff',22)),
+    tempVentOn:   parseFloat(gv('cfg-tempVentOn',25)),
+    tempVentOff:  parseFloat(gv('cfg-tempVentOff',23)),
+    autoTemp: gb('chk-temp'),
+    germDur: parseInt(gv('cfg-germDur',3)),
+    germH1:  parseInt(gv('cfg-germH1',8)),
+    germH2:  parseInt(gv('cfg-germH2',20)),
+    autoGerm: gb('chk-germ'),
+    torreDur: parseInt(gv('cfg-torreDur',2)),
+    torreInt: parseInt(gv('cfg-torreInt',10)),
+    autoTorre: gb('chk-torre'),
+    luzOn:  parseInt(gv('cfg-luzOn',6)),
+    luzOff: parseInt(gv('cfg-luzOff',22)),
+    autoLuz: gb('chk-luz'),
+    phTarget: parseFloat(gv('cfg-phTarget',6.2)),
+    phBanda:  parseFloat(gv('cfg-phBanda',0.2)),
+    phPulso:  parseInt(gv('cfg-phPulso',3)),
+    autoPH: gb('chk-ph'),
+    alertTL: parseFloat(gv('cfg-alertTL',15)),
+    alertTH: parseFloat(gv('cfg-alertTH',30)),
+    alertHL: parseFloat(gv('cfg-alertHL',40)),
+    alertHH: parseFloat(gv('cfg-alertHH',85)),
+    alertNL: parseFloat(gv('cfg-alertNL',100))
+  };
+  fetch(espUrl('/api/config'),{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(cfg)
+  }).then(function(r){return r.json();})
+    .then(function(){
+      var btn=document.getElementById('btn-savecfg');
+      if(btn){btn.textContent='✓ Guardado';btn.style.color='#1db97a';
+        setTimeout(function(){btn.textContent='Guardar configuración';},2000);}
+    });
+}
+
+function pushH(arr, ts, val) {
+  arr.push({x:ts,y:val});
+  if(arr.length>290) arr.shift();
+}
+
+function loadHistory(d) {
+  var now=Date.now(), count=d.count||0;
+  if(d.t)  d.t.forEach(function(v,i){ histT.push({x:new Date(now-(count-i)*300000),y:v}); });
+  if(d.h)  d.h.forEach(function(v,i){ histH.push({x:new Date(now-(count-i)*300000),y:v}); });
+  if(d.nv) d.nv.forEach(function(v,i){ histNivel.push({x:new Date(now-(count-i)*300000),y:v}); });
+  setTimeout(function(){
+    if(cTH){upd(cTH,histT.slice(-36));cTH.update('none');}
+    if(cHH){upd(cHH,histH.slice(-36));cHH.update('none');}
+    if(cNH){upd(cNH,histNivel.slice(-36));cNH.update('none');}
+  },300);
+}
+
+// Arranque automatico — sin prompt
+document.addEventListener('DOMContentLoaded', function() {
+  // IP fija del ESP32 — cambiar si cambia la IP
+  var IP_FIJA = '192.168.0.59';
+
+  // Usar IP guardada o la fija
+  if (!ESP_IP) {
+    ESP_IP = IP_FIJA;
+    localStorage.setItem('esp32_ip', ESP_IP);
+  }
+
+  // Subtitulo clickeable para cambiar IP si hace falta
+  var sub = document.getElementById('ip-lbl');
+  if(sub){
+    sub.textContent = ESP_IP;
+    sub.style.cursor = 'pointer';
+    sub.title = 'Tap para cambiar IP';
+    sub.addEventListener('click', function(){
+      var nueva = prompt('IP del ESP32:', ESP_IP);
+      if(nueva && nueva.trim()){
+        ESP_IP = nueva.trim();
+        localStorage.setItem('esp32_ip', ESP_IP);
+        sub.textContent = ESP_IP;
+        connectESP();
+      }
+    });
+  }
+
+  // Conectar directo sin preguntar — pequeño delay para que Chart.js termine
+  setTimeout(connectESP, 500);
+});
+
+function pad(n){return n<10?'0'+n:n;}
+setInterval(function(){
+  var t=new Date().toLocaleTimeString('es-AR');
+  document.getElementById('bclk').textContent=t;
+  document.getElementById('bclk2').textContent=t;
+},1000);
+
+// ── RANGOS — selector global ──────────────────────────────
+function rngAll(btn,n){
+  btn.parentElement.querySelectorAll('.rb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  upd(cTH,histT.slice(-n)); upd(cHH,histH.slice(-n));
+  upd(cPHH,histPH.slice(-n)); upd(cECH,histEC.slice(-n));
+  upd(cNH,histNivel.slice(-n));
+  // actualizar labels del último valor
+  if(histT.length){var lT=histT[histT.length-1];document.getElementById('ht-last').textContent=lT.y.toFixed(1)+'°C';}
+  if(histH.length){var lH=histH[histH.length-1];document.getElementById('hh-last').textContent=lH.y.toFixed(0)+'%';}
+  if(histPH.length){var lP=histPH[histPH.length-1];document.getElementById('hph-last').textContent=lP.y.toFixed(2);}
+  if(histEC.length){var lE=histEC[histEC.length-1];document.getElementById('hec-last').textContent=lE.y.toFixed(2)+' mS';}
+  if(histNivel.length){var lN=histNivel[histNivel.length-1];document.getElementById('hn-last').textContent=lN.y+' L';}
+}
+
+// ── ALERTAS WHATSAPP ─────────────────────────────────────
+var alertCfg={temp:true,hum:true,ph:true,ec:true,nivel:true};
+var alertCooldown={};
+var ALERT_SENSORS=[
+  {id:'temp',name:'Temp. Aire',unit:'°C'},
+  {id:'hum', name:'Humedad',   unit:'%'},
+  {id:'ph',  name:'pH',        unit:''},
+  {id:'ec',  name:'EC',        unit:' mS/cm'},
+  {id:'nivel',name:'Nivel Tanque',unit:' L'},
+];
+
+// Generar filas de toggles de alertas
+setTimeout(function(){
+  var cont=document.getElementById('alert-rows');
+  if(!cont)return;
+  ALERT_SENSORS.forEach(function(s){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--border)';
+    row.innerHTML='<div style="font-size:11px;color:var(--text)">'+s.name+'</div>'
+      +'<label class="tog"><input type="checkbox" '+(alertCfg[s.id]?'checked':'')+' onchange="alertCfg[\''+s.id+'\'] = this.checked"><div class="ttr"></div><div class="tth"></div></label>';
+    cont.appendChild(row);
+  });
+  // última fila sin border
+  var rows=cont.querySelectorAll('div');
+  if(rows.length)rows[rows.length-1].style.borderBottom='none';
+},100);
+
+function getWAConfig(){
+  return{
+    num:(document.getElementById('wa-num')||{}).value||'',
+    key:(document.getElementById('wa-key')||{}).value||''
+  };
+}
+function saveWA(){
+  var c=getWAConfig();
+  localStorage.setItem('wa-num',c.num);
+  localStorage.setItem('wa-key',c.key);
+  localStorage.setItem('wa-alerts',JSON.stringify(alertCfg));
+  document.getElementById('wa-status').textContent='✓ Configuración guardada';
+  setTimeout(function(){document.getElementById('wa-status').textContent='';},2500);
+}
+function testWA(){
+  sendWA('🌿 AeroControl · Prueba de alerta funcionando correctamente ✓');
+}
+function sendWA(msg){
+  var c=getWAConfig();
+  if(!c.num||!c.key){
+    document.getElementById('wa-status').textContent='⚠ Completá número y API key primero';
+    return;
+  }
+  var url='https://api.callmebot.com/whatsapp.php?phone='+encodeURIComponent(c.num)
+    +'&apikey='+encodeURIComponent(c.key)
+    +'&text='+encodeURIComponent(msg);
+  // En el ESP32 real esto lo hace el propio microcontrolador vía HTTPClient
+  // Desde el browser usamos un fetch (puede fallar por CORS — en producción va al ESP32)
+  fetch(url,{mode:'no-cors'}).catch(function(){});
+  document.getElementById('wa-status').textContent='📤 Alerta enviada a WhatsApp';
+  setTimeout(function(){document.getElementById('wa-status').textContent='';},3000);
+}
+
+// Chequear alertas en cada tick (cooldown 10 min por sensor)
+function checkAlerts(data){
+  var COOLDOWN=600000; // 10 min
+  var now=Date.now();
+  var msgs=[];
+  if(alertCfg.temp && (data.t<Z.tL||data.t>Z.tH)){
+    if(!alertCooldown.temp||now-alertCooldown.temp>COOLDOWN){
+      alertCooldown.temp=now;
+      msgs.push('🌡 Temp. Aire: '+data.t.toFixed(1)+'°C '+(data.t<Z.tL?'BAJA (mín '+Z.tL+'°)':'ALTA (máx '+Z.tH+'°)'));
+    }
+  }
+  if(alertCfg.hum && (data.h<Z.hL||data.h>Z.hH)){
+    if(!alertCooldown.hum||now-alertCooldown.hum>COOLDOWN){
+      alertCooldown.hum=now;
+      msgs.push('💧 Humedad: '+data.h+'% '+(data.h<Z.hL?'BAJA (mín '+Z.hL+'%)':'ALTA (máx '+Z.hH+'%)'));
+    }
+  }
+  if(alertCfg.ph && (phSim<Z.phL||phSim>Z.phH)){
+    if(!alertCooldown.ph||now-alertCooldown.ph>COOLDOWN){
+      alertCooldown.ph=now;
+      msgs.push('⚗️ pH: '+phSim.toFixed(2)+' '+(phSim<Z.phL?'BAJO (mín '+Z.phL+')':'ALTO (máx '+Z.phH+')'));
+    }
+  }
+  if(alertCfg.nivel && nivelSim<Z.nMin){
+    if(!alertCooldown.nivel||now-alertCooldown.nivel>COOLDOWN){
+      alertCooldown.nivel=now;
+      msgs.push('🪣 Nivel tanque: '+Math.round(nivelSim)+' L — BAJO (mín '+Z.nMin+' L)');
+    }
+  }
+  if(msgs.length){
+    var time=new Date().toLocaleTimeString('es-AR');
+    sendWA('🌿 AeroControl · '+time+'\n'+msgs.join('\n'));
+  }
+}
+// Cargar config guardada
+setTimeout(function(){
+  var n=localStorage.getItem('wa-num'),k=localStorage.getItem('wa-key');
+  var el1=document.getElementById('wa-num'),el2=document.getElementById('wa-key');
+  if(n&&el1)el1.value=n; if(k&&el2)el2.value=k;
+  try{var a=JSON.parse(localStorage.getItem('wa-alerts')||'{}');Object.assign(alertCfg,a);}catch(e){}
+},200);
+
+// ── NAVEGACIÓN PANTALLAS ─────────────────────────────────
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on');});
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+  // Redibujar charts al entrar a historial
+  if(id==='s-hist'){
+    setTimeout(function(){
+      var activeRb=document.querySelector('.rbg .rb.on');
+      var n=activeRb?parseInt(activeRb.textContent):36;
+      upd(cTH,histT.slice(-n)); upd(cHH,histH.slice(-n));
+      upd(cPHH,histPH.slice(-n)); upd(cECH,histEC.slice(-n));
+      upd(cNH,histNivel.slice(-n));
+      if(cTH)cTH.resize(); if(cHH)cHH.resize();
+    },60);
+  }
+}
+
+// ── TABS PANTALLA 2 ──────────────────────────────────────
+function stab(id,i){
+  document.querySelectorAll('.subpage').forEach(function(s){s.classList.remove('on');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('sp-'+id).classList.add('on');
+  document.querySelectorAll('.tab')[i].classList.add('on');
+}
+
+// ── ACTUADORES ───────────────────────────────────────────
+function act(id,val){}
+function pls(id,s){
+  document.getElementById('bst').textContent='● pulso '+s+'s → '+id;
+  setTimeout(function(){document.getElementById('bst').textContent='● simulando';},s*1000);
+}
+function ledsl(sl){document.getElementById('lpct').textContent=Math.round(sl.value/255*100)+'%';}
+
+// ── ZONAS ────────────────────────────────────────────────
+function saveZ(){
+  Z.tL=+document.getElementById('ztL').value; Z.tH=+document.getElementById('ztH').value;
+  Z.hL=+document.getElementById('zhL').value; Z.hH=+document.getElementById('zhH').value;
+  document.getElementById('bst').textContent='● zonas guardadas ✓';
+  setTimeout(function(){document.getElementById('bst').textContent='● simulando';},2000);
+}
+
+// ── ADMIN ────────────────────────────────────────────────
+function enMod(on,gauges,charts){
+  (gauges||[]).forEach(function(id){var el=document.getElementById(id);if(el){if(on)el.classList.remove('dim');else el.classList.add('dim');}});
+  (charts||[]).forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=on?'block':'none';});
+}
+function enNivel(on){
+  var tw=document.getElementById('tw-nivel');
+  if(tw){if(on)tw.style.opacity='1';else tw.style.opacity='.35';}
+  var cc=document.getElementById('cc-nivel');
+  if(cc)cc.style.display=on?'block':'none';
+  if(on)setNivel(nivelSim);
+}
+function enAct(id,on){var el=document.getElementById(id);if(el){if(on)el.classList.remove('dim');else el.classList.add('dim');}}
+
+// ── CLAVE ADMIN ──────────────────────────────────────────
+var ADMIN_PWD='1234'; // ← cambiá esta clave
+var adminUnlocked=false;
+
+function reqAdmin(){
+  if(adminUnlocked){stab('adm',2);return;}
+  document.getElementById('admin-pwd').value='';
+  document.getElementById('pwd-err').textContent='';
+  document.getElementById('modal-admin').classList.add('on');
+  setTimeout(function(){document.getElementById('admin-pwd').focus();},100);
+}
+function closeModal(){
+  document.getElementById('modal-admin').classList.remove('on');
+  // Volver a pestaña anterior si admin no está desbloqueado
+  if(!adminUnlocked){
+    document.querySelectorAll('.subpage').forEach(function(s){s.classList.remove('on');});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+    document.getElementById('sp-graf').classList.add('on');
+    document.querySelectorAll('.tab')[0].classList.add('on');
+  }
+}
+function checkPwd(){
+  var pwd=document.getElementById('admin-pwd').value;
+  if(pwd===ADMIN_PWD){
+    adminUnlocked=true;
+    document.getElementById('modal-admin').classList.remove('on');
+    stab('adm',2);
+    // Cambiar tab a "Admin ✓"
+    document.querySelectorAll('.tab')[2].textContent='Admin ✓';
+    document.querySelectorAll('.tab')[2].style.color='var(--g)';
+  } else {
+    document.getElementById('pwd-err').textContent='Clave incorrecta, intentá de nuevo';
+    document.getElementById('admin-pwd').value='';
+    document.getElementById('admin-pwd').focus();
+    // Shake
+    var inp=document.getElementById('admin-pwd');
+    inp.style.borderColor='#e84545';
+    setTimeout(function(){inp.style.borderColor='';},1000);
+  }
+}
+</script>
+<!-- MODAL CLAVE ADMIN -->
+<div class="modal-overlay" id="modal-admin">
+  <div class="modal-box">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+    </div>
+    <div class="modal-title">Acceso Administrador</div>
+    <div class="modal-sub">Ingresá la clave para continuar</div>
+    <input class="modal-inp" type="password" id="admin-pwd" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')checkPwd()">
+    <div class="modal-err" id="pwd-err"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-ok" onclick="checkPwd()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── MODAL PIN LOGIN ── -->
+<div class="auth-overlay" id="auth-overlay" style="display:none">
+  <div class="auth-card">
+    <div class="auth-title">🔐 AeroControl</div>
+    <div class="auth-sub" id="auth-sub">Ingresá tu PIN para continuar</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn del" onclick="pinClear()">Borrar todo</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ── MODAL MOTIVO ── -->
+<div class="motivo-overlay" id="motivo-overlay" style="display:none">
+  <div class="motivo-card">
+    <div class="motivo-title">📝 ¿Por qué realizás este cambio?</div>
+    <textarea class="motivo-input" id="motivo-input" rows="3"
+      placeholder="Ej: Ajuste de temperatura por cambio de estación..."></textarea>
+    <div class="motivo-btns">
+      <button class="motivo-btn motivo-cancel" onclick="motivoCancel()">Cancelar</button>
+      <button class="motivo-btn motivo-ok" onclick="motivoConfirm()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ SISTEMA DE AUTENTICACIÓN PIN ═══════════════════════
+var AUTH = {
+  token:   localStorage.getItem('ac_token')   || null,
+  nombre:  localStorage.getItem('ac_nombre')  || null,
+  rol:     localStorage.getItem('ac_rol')      || null,
+  pinBuf:  '',
+  onOk:    null,      // callback cuando login es exitoso
+  intentos: 0
+};
+
+// Usar servidor Raspberry Pi si está disponible, si no directo al ESP32
+function apiUrl(path) {
+  var pi = localStorage.getItem('pi_ip');
+  if (pi) return 'http://' + pi + path;
+  return espUrl(path.replace('/esp32',''));
+}
+
+function piUrl(path) {
+  var pi = localStorage.getItem('pi_ip') || 'localhost';
+  if (location.hostname !== 'github.io' && location.protocol !== 'https:')
+    return 'http://' + location.hostname + ':5000' + path;
+  return 'http://' + pi + ':5000' + path;
+}
+
+// Verificar sesión existente
+function verifySession(cb) {
+  if (!AUTH.token) { cb(false); return; }
+  fetch(piUrl('/auth/verify'), {
+    headers: {'X-Auth-Token': AUTH.token}
+  }).then(function(r) {
+    if (r.ok) { cb(true); } else { clearAuth(); cb(false); }
+  }).catch(function() { cb(false); });
+}
+
+function clearAuth() {
+  AUTH.token = AUTH.nombre = AUTH.rol = null;
+  localStorage.removeItem('ac_token');
+  localStorage.removeItem('ac_nombre');
+  localStorage.removeItem('ac_rol');
+}
+
+// ── PIN UI ──────────────────────────────
+function pinPress(n) {
+  if (AUTH.pinBuf.length >= 4) return;
+  AUTH.pinBuf += n;
+  updateDots();
+  if (AUTH.pinBuf.length === 4) {
+    setTimeout(submitPin, 150);
+  }
+}
+function pinDel() {
+  AUTH.pinBuf = AUTH.pinBuf.slice(0,-1);
+  updateDots();
+}
+function pinClear() {
+  AUTH.pinBuf = '';
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function updateDots() {
+  for(var i=0;i<4;i++) {
+    var d = document.getElementById('pd'+i);
+    d.classList.toggle('filled', i < AUTH.pinBuf.length);
+    d.classList.remove('error');
+  }
+}
+function pinError(msg) {
+  for(var i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
+  document.getElementById('pin-error').textContent = msg;
+  AUTH.pinBuf = '';
+  setTimeout(updateDots, 600);
+}
+
+function submitPin() {
+  fetch(piUrl('/auth/login'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({pin: AUTH.pinBuf})
+  }).then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        AUTH.token  = d.token;
+        AUTH.nombre = d.nombre;
+        AUTH.rol    = d.rol;
+        AUTH.intentos = 0;
+        localStorage.setItem('ac_token',  d.token);
+        localStorage.setItem('ac_nombre', d.nombre);
+        localStorage.setItem('ac_rol',    d.rol);
+        document.getElementById('auth-overlay').style.display = 'none';
+        // Actualizar UI header
+        var ul = document.getElementById('user-label');
+        if (ul) ul.textContent = '👤 ' + d.nombre;
+        if (AUTH.onOk) { AUTH.onOk(); AUTH.onOk = null; }
+      } else {
+        AUTH.intentos++;
+        AUTH.pinBuf = '';
+        if (AUTH.intentos >= 3) {
+          pinError('Demasiados intentos. Esperá 30s.');
+          setTimeout(function(){AUTH.intentos=0;}, 30000);
+        } else {
+          pinError('PIN incorrecto (' + AUTH.intentos + '/3)');
+        }
+      }
+    }).catch(function() {
+      // Sin servidor Pi — modo directo (solo dashboard, sin log)
+      pinError('Sin conexión al servidor');
+      AUTH.pinBuf = '';
+    });
+}
+
+// Mostrar modal de PIN
+function requireLogin(cb) {
+  if (AUTH.token) {
+    verifySession(function(ok) {
+      if (ok) { cb(); }
+      else { AUTH.onOk = cb; showPinModal(); }
+    });
+  } else {
+    AUTH.onOk = cb;
+    showPinModal();
+  }
+}
+
+function showPinModal() {
+  AUTH.pinBuf = '';
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function doLogout() {
+  if (AUTH.token) {
+    fetch(piUrl('/auth/logout'), {
+      method: 'POST',
+      headers: {'X-Auth-Token': AUTH.token}
+    }).catch(function(){});
+  }
+  clearAuth();
+  var ul = document.getElementById('user-label');
+  if (ul) ul.textContent = '';
+}
+
+// ── MODAL MOTIVO ───────────────────────
+var _motivoCb = null;
+function pedirMotivo(cb) {
+  _motivoCb = cb;
+  document.getElementById('motivo-input').value = '';
+  document.getElementById('motivo-overlay').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('motivo-input').focus(); }, 100);
+}
+function motivoConfirm() {
+  var m = document.getElementById('motivo-input').value.trim();
+  if (m.length < 3) {
+    document.getElementById('motivo-input').style.borderColor = '#e84545';
+    return;
+  }
+  document.getElementById('motivo-overlay').style.display = 'none';
+  if (_motivoCb) { _motivoCb(m); _motivoCb = null; }
+}
+function motivoCancel() {
+  document.getElementById('motivo-overlay').style.display = 'none';
+  _motivoCb = null;
+}
+
+// ── GUARDAR CONFIG CON AUTH Y MOTIVO ──
+function saveCfg() {
+  // Guardar config directo al ESP32
+  var _doSave = function(motivo) {
+      var on=parseInt(gv('cfg-luzOn',6)), off=parseInt(gv('cfg-luzOff',22));
+      var h=off>on?off-on:24-(on-off);
+      var el=document.getElementById('luz-horas'); if(el)el.textContent=h+' horas';
+
+      var cfg = {
+        tempCalorOn:  parseFloat(gv('cfg-tempCalorOn',20)),
+        tempCalorOff: parseFloat(gv('cfg-tempCalorOff',22)),
+        tempVentOn:   parseFloat(gv('cfg-tempVentOn',25)),
+        tempVentOff:  parseFloat(gv('cfg-tempVentOff',23)),
+        autoTemp: gb('chk-temp'),
+        germDur:  parseInt(gv('cfg-germDur',3)),
+        germH1:   parseInt(gv('cfg-germH1',8)),
+        germH2:   parseInt(gv('cfg-germH2',20)),
+        autoGerm: gb('chk-germ'),
+        torreDur: parseInt(gv('cfg-torreDur',2)),
+        torreInt: parseInt(gv('cfg-torreInt',10)),
+        autoTorre: gb('chk-torre'),
+        luzOn:   parseInt(gv('cfg-luzOn',6)),
+        luzOff:  parseInt(gv('cfg-luzOff',22)),
+        autoLuz: gb('chk-luz'),
+        phTarget: parseFloat(gv('cfg-phTarget',6.2)),
+        phBanda:  parseFloat(gv('cfg-phBanda',0.2)),
+        phPulso:  parseInt(gv('cfg-phPulso',3)),
+        autoPH: gb('chk-ph'),
+        alertTL: parseFloat(gv('cfg-alertTL',15)),
+        alertTH: parseFloat(gv('cfg-alertTH',30)),
+        alertHL: parseFloat(gv('cfg-alertHL',40)),
+        alertHH: parseFloat(gv('cfg-alertHH',85)),
+        alertNL: parseFloat(gv('cfg-alertNL',100))
+      };
+
+      fetch(piUrl('/api/config'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Auth-Token': AUTH.token || ''
+        },
+        body: JSON.stringify({config: cfg, motivo: motivo})
+      }).then(function(r){ return r.json(); })
+        .then(function(d){
+          var btn=document.getElementById('btn-savecfg');
+          if(btn){
+            btn.textContent = d.ok ? '✓ Guardado' : '✗ Error';
+            btn.style.color = d.ok ? '#1db97a' : '#e84545';
+            setTimeout(function(){
+              btn.textContent='Guardar configuración';
+              btn.style.color='#1db97a';
+            }, 2000);
+          }
+        }).catch(function(){
+          // Fallback directo al ESP32 sin log
+          fetch(espUrl('/api/config'), {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(cfg)
+          });
+        });
+    });
+  });
+}
+
+// ── TOGGLE RELAY CON AUTH ──────────────
+function toggleRelay(idx, on) {
+  // Intentar via Pi primero, si falla directo al ESP32
+  var payload = JSON.stringify({idx:idx, on:on, manual:true, dur:0});
+  
+  fetch(espUrl('/api/relay'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: payload
+  }).then(function(r){ 
+    if(r.ok) { 
+      setTimeout(pollESP, 500);
+    }
+  }).catch(function(){
+    console.log('Relay error');
+  });
+}
+
+// ── PANEL LOGS (solo admin) ────────────
+function showLogs() {
+  requireLogin(function() {
+    if (AUTH.rol !== 'admin') {
+      alert('Solo el administrador puede ver los logs');
+      return;
+    }
+    fetch(piUrl('/api/logs/cambios?limit=30'), {
+      headers: {'X-Auth-Token': AUTH.token}
+    }).then(function(r){ return r.json(); })
+      .then(function(logs) {
+        var cont = document.getElementById('log-panel');
+        if (!cont) return;
+        if (!logs.length) { cont.innerHTML='<div style="font-size:10px;color:var(--muted)">Sin cambios registrados</div>'; return; }
+        var t = '<table class="log-table"><tr><th>Fecha</th><th>Usuario</th><th>Campo</th><th>Antes</th><th>Después</th><th>Motivo</th></tr>';
+        logs.forEach(function(l) {
+          t += '<tr><td>'+l.fecha+'</td><td>'+l.nombre+'</td><td>'+l.campo+'</td>'+
+               '<td>'+l.valor_ant+'</td><td>'+l.valor_nuevo+'</td>'+
+               '<td>'+l.motivo+'</td></tr>';
+        });
+        t += '</table>';
+        cont.innerHTML = t;
+      }).catch(function(){
+        var cont = document.getElementById('log-panel');
+        if(cont) cont.innerHTML='<div style="font-size:10px;color:var(--muted)">Sin conexión al servidor Pi</div>';
+      });
+  });
+}
+
+// Inicializar auth al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  // Agregar label usuario en header si existe
+  var header = document.querySelector('.lsub');
+  if (header && !document.getElementById('user-label')) {
+    var ul = document.createElement('span');
+    ul.id = 'user-label';
+    ul.style.cssText = 'font-size:9px;color:#1db97a;margin-left:8px;cursor:pointer';
+    ul.onclick = doLogout;
+    ul.title = 'Click para cerrar sesión';
+    header.parentNode.insertBefore(ul, header.nextSibling);
+  }
+  // Verificar sesión guardada
+  if (AUTH.token) {
+    verifySession(function(ok) {
+      if (ok && document.getElementById('user-label')) {
+        document.getElementById('user-label').textContent = '👤 ' + AUTH.nombre;
+      } else if (!ok) {
+        clearAuth();
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>
