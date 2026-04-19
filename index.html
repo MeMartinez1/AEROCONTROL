@@ -371,7 +371,7 @@ canvas{display:block;width:100%!important;max-height:70px}
           <div class="act-psub">Sol. A</div>
           <div class="prow"><button class="pbtn" onclick="pls('pA',5)">5s</button><button class="pbtn" onclick="pls('pA',10)">10s</button></div>
         </div>
-        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+        <label class="tog"><input type="checkbox" onchange="act('pA',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
       </div>
       <div class="act-pill" id="ap-pB">
         <div>
@@ -379,7 +379,7 @@ canvas{display:block;width:100%!important;max-height:70px}
           <div class="act-psub">Sol. B</div>
           <div class="prow"><button class="pbtn" onclick="pls('pB',5)">5s</button><button class="pbtn" onclick="pls('pB',10)">10s</button></div>
         </div>
-        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+        <label class="tog"><input type="checkbox" onchange="act('pB',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
       </div>
       <div class="act-pill" id="ap-pPH">
         <div>
@@ -387,7 +387,7 @@ canvas{display:block;width:100%!important;max-height:70px}
           <div class="act-psub">Corrector</div>
           <div class="prow"><button class="pbtn" onclick="pls('pPH',2)">2s</button><button class="pbtn" onclick="pls('pPH',5)">5s</button></div>
         </div>
-        <label class="tog"><input type="checkbox"><div class="ttr"></div><div class="tth"></div></label>
+        <label class="tog"><input type="checkbox" onchange="act('pPH',this.checked)"><div class="ttr"></div><div class="tth"></div></label>
       </div>
     </div>
 
@@ -1399,10 +1399,18 @@ function stab(id,i){
 }
 
 // ── ACTUADORES ───────────────────────────────────────────
-function act(id,val){}
+function act(id,val){
+  var map={'bm':0,'led':4,'pA':5,'pB':6,'pPH':7};
+  var idx=map[id];
+  if(idx===undefined) return;
+  toggleRelay(idx, val);
+}
 function pls(id,s){
-  document.getElementById('bst').textContent='● pulso '+s+'s → '+id;
-  setTimeout(function(){document.getElementById('bst').textContent='● simulando';},s*1000);
+  var map={'bm':0,'led':4,'pA':5,'pB':6,'pPH':7};
+  var idx=map[id];
+  if(idx===undefined) return;
+  toggleRelay(idx, true);
+  setTimeout(function(){ toggleRelay(idx, false); }, s*1000);
 }
 function ledsl(sl){document.getElementById('lpct').textContent=Math.round(sl.value/255*100)+'%';}
 
@@ -1755,8 +1763,8 @@ function saveCfg() {
             body: JSON.stringify(cfg)
           });
         });
-    });
-  });
+    };
+  motivoAsk(_doSave);
 }
 
 // ── TOGGLE RELAY CON AUTH ──────────────
