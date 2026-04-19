@@ -151,6 +151,65 @@ canvas{display:block;width:100%!important;max-height:70px}
 .bhw{font-size:7px;font-family:var(--mono);padding:1px 5px;border-radius:3px;background:rgba(29,185,122,.1);color:var(--g);margin-top:2px;display:inline-block}
 .ibox{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;font-family:var(--mono);font-size:9px;color:var(--muted);line-height:2.2;margin-top:10px}
 .iv{color:var(--text)}
+
+.zona-block{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+.zona-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;font-weight:500;color:var(--text)}
+.ztoggle{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);cursor:pointer;font-weight:400}
+.zrow{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:10px}
+.zrow:last-child{border:none}
+.zlbl{color:var(--muted)}
+.zinp{display:flex;align-items:center;gap:3px;color:var(--muted);font-size:10px}
+.zfield{width:46px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px;text-align:center;font-family:var(--mono)}
+
+/* ── AUTH PIN ─────────────────────────────────────── */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;backdrop-filter:blur(4px)}
+.auth-card{background:#131f17;border:1px solid #1e3028;border-radius:16px;
+  padding:28px 24px;width:300px;text-align:center}
+.auth-title{font-size:15px;font-weight:500;color:#1db97a;margin-bottom:4px}
+.auth-sub{font-size:10px;color:#4d7060;margin-bottom:20px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #1e3028;
+  background:transparent;transition:background .15s}
+.pin-dot.filled{background:#1db97a;border-color:#1db97a}
+.pin-dot.error{background:#e84545;border-color:#e84545}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-btn{padding:14px;border-radius:10px;border:1px solid #1e3028;
+  background:#0b110e;color:#cce0d5;font-size:16px;cursor:pointer;
+  font-family:var(--mono);transition:background .1s}
+.pin-btn:active{background:#1e3028}
+.pin-btn.del{color:#4d7060;font-size:12px}
+.pin-error{font-size:10px;color:#e84545;margin-top:8px;min-height:16px}
+.auth-user{font-size:11px;color:#1db97a;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.auth-logout{font-size:10px;color:#4d7060;cursor:pointer;
+  margin-top:14px;text-decoration:underline}
+/* Motivo modal */
+.motivo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);
+  display:flex;align-items:center;justify-content:center;z-index:9998}
+.motivo-card{background:#131f17;border:1px solid #1e3028;border-radius:14px;
+  padding:20px;width:320px}
+.motivo-title{font-size:13px;color:#1db97a;margin-bottom:8px}
+.motivo-input{width:100%;padding:8px;border-radius:7px;
+  border:1px solid #1e3028;background:#0b110e;color:#cce0d5;
+  font-size:12px;font-family:var(--mono);resize:none;
+  box-sizing:border-box}
+.motivo-btns{display:flex;gap:8px;margin-top:10px}
+.motivo-btn{flex:1;padding:8px;border-radius:7px;border:1px solid #1e3028;
+  font-size:11px;cursor:pointer;font-family:var(--mono)}
+.motivo-ok{background:rgba(29,185,122,.15);color:#1db97a;border-color:rgba(29,185,122,.4)}
+.motivo-cancel{background:transparent;color:#4d7060}
+/* Log viewer */
+.log-table{width:100%;border-collapse:collapse;font-size:9px}
+.log-table th{background:#1e3028;padding:5px 6px;text-align:left;color:#4d7060;font-weight:500}
+.log-table td{padding:4px 6px;border-bottom:1px solid #1e3028;color:#cce0d5;vertical-align:top}
+.log-badge{font-size:8px;padding:1px 5px;border-radius:3px}
+.lb-admin{background:rgba(29,185,122,.15);color:#1db97a}
+.lb-oper{background:rgba(58,143,232,.15);color:#3a8fe8}
+.lb-ok{background:rgba(29,185,122,.1);color:#1db97a}
+.lb-fail{background:rgba(232,69,69,.1);color:#e84545}
+
 </style>
 </head>
 <body>
@@ -528,6 +587,181 @@ canvas{display:block;width:100%!important;max-height:70px}
     Cambiar IP del ESP32
   </button>
 </div>
+<!-- Admin Zonas -->
+<div id="admin-zonas">
+
+  <!-- ESTADO RELÉS -->
+  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Estado relés</div>
+  <div id="relay-panel" style="margin-bottom:14px;font-size:11px;color:var(--muted)">Conectando...</div>
+
+  <!-- ZONA TEMPERATURA -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🌡 Temperatura</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-temp" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Caloventor ON si T° &lt;</span>
+      <div class="zinp"><input id="cfg-tempCalorOn" type="number" step="0.5" value="20" class="zfield"> °C</div></div>
+    <div class="zrow"><span class="zlbl">Caloventor OFF si T° &gt;</span>
+      <div class="zinp"><input id="cfg-tempCalorOff" type="number" step="0.5" value="22" class="zfield"> °C</div></div>
+    <div class="zrow"><span class="zlbl">Ventilador ON si T° &gt;</span>
+      <div class="zinp"><input id="cfg-tempVentOn" type="number" step="0.5" value="25" class="zfield"> °C</div></div>
+    <div class="zrow"><span class="zlbl">Ventilador OFF si T° &lt;</span>
+      <div class="zinp"><input id="cfg-tempVentOff" type="number" step="0.5" value="23" class="zfield"> °C</div></div>
+  </div>
+
+  <!-- ZONA GERMINACIÓN -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🌱 Riego germinación</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-germ" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Duración</span>
+      <div class="zinp"><input id="cfg-germDur" type="number" min="1" max="60" value="3" class="zfield"> min</div></div>
+    <div class="zrow"><span class="zlbl">Riego 1</span>
+      <div class="zinp"><input id="cfg-germH1" type="number" min="0" max="23" value="8" class="zfield"> :00 h</div></div>
+    <div class="zrow"><span class="zlbl">Riego 2</span>
+      <div class="zinp"><input id="cfg-germH2" type="number" min="0" max="23" value="20" class="zfield"> :00 h</div></div>
+  </div>
+
+  <!-- ZONA TORRES -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🏗 Riego torres</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-torre" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Duración por ciclo</span>
+      <div class="zinp"><input id="cfg-torreDur" type="number" min="1" max="60" value="2" class="zfield"> min</div></div>
+    <div class="zrow"><span class="zlbl">Intervalo entre riegos</span>
+      <div class="zinp"><input id="cfg-torreInt" type="number" min="1" max="120" value="10" class="zfield"> min</div></div>
+  </div>
+
+  <!-- ZONA LUCES -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>💡 Luces full spectrum</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-luz" checked onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">Encender</span>
+      <div class="zinp"><input id="cfg-luzOn" type="number" min="0" max="23" value="6" class="zfield"> :00 h</div></div>
+    <div class="zrow"><span class="zlbl">Apagar</span>
+      <div class="zinp"><input id="cfg-luzOff" type="number" min="0" max="23" value="22" class="zfield"> :00 h</div></div>
+    <div class="zrow"><span class="zlbl">Horas de luz</span>
+      <div id="luz-horas" style="font-size:11px;color:#1db97a">16 horas</div></div>
+  </div>
+
+  <!-- ZONA pH -->
+  <div class="zona-block">
+    <div class="zona-hd">
+      <span>🧪 Corrección pH</span>
+      <label class="ztoggle"><input type="checkbox" id="chk-ph" onchange="saveCfg()"> Auto</label>
+    </div>
+    <div class="zrow"><span class="zlbl">pH objetivo</span>
+      <div class="zinp"><input id="cfg-phTarget" type="number" step="0.1" value="6.2" class="zfield"></div></div>
+    <div class="zrow"><span class="zlbl">Banda tolerancia ±</span>
+      <div class="zinp"><input id="cfg-phBanda" type="number" step="0.1" value="0.2" class="zfield"></div></div>
+    <div class="zrow"><span class="zlbl">Pulso corrector</span>
+      <div class="zinp"><input id="cfg-phPulso" type="number" min="1" max="30" value="3" class="zfield"> seg</div></div>
+  </div>
+
+  <!-- ZONA ALERTAS -->
+  <div class="zona-block">
+    <div class="zona-hd"><span>🔔 Umbrales de alerta</span></div>
+    <div class="zrow"><span class="zlbl">Temp mín / máx</span>
+      <div class="zinp">
+        <input id="cfg-alertTL" type="number" value="15" class="zfield" style="width:40px"> /
+        <input id="cfg-alertTH" type="number" value="30" class="zfield" style="width:40px"> °C
+      </div></div>
+    <div class="zrow"><span class="zlbl">Humedad mín / máx</span>
+      <div class="zinp">
+        <input id="cfg-alertHL" type="number" value="40" class="zfield" style="width:40px"> /
+        <input id="cfg-alertHH" type="number" value="85" class="zfield" style="width:40px"> %
+      </div></div>
+    <div class="zrow"><span class="zlbl">Nivel mínimo tanque</span>
+      <div class="zinp"><input id="cfg-alertNL" type="number" value="100" class="zfield"> L</div></div>
+  </div>
+
+  <button id="btn-savecfg" onclick="saveCfg()" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(29,185,122,.4);background:rgba(29,185,122,.1);color:#1db97a;font-size:12px;cursor:pointer;margin-bottom:10px">
+    Guardar configuración
+  </button>
+
+</div>
+
+<div style="margin-bottom:12px">
+  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Automatizaciones</div>
+
+  <!-- Caloventor -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">🔥 Caloventor</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-calor" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Encender bajo <input id="cfg-tempOn" type="number" step="0.5" value="20" style="width:50px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> °C</div>
+      <div>Apagar sobre <input id="cfg-tempOff" type="number" step="0.5" value="22" style="width:50px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> °C</div>
+    </div>
+  </div>
+
+  <!-- Germinación -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">💧 Bomba germinación</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-germ" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Duración <input id="cfg-germDur" type="number" min="1" max="60" value="3" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> min</div>
+      <div>Riego 1 <input id="cfg-germH1" type="number" min="0" max="23" value="8" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+      <div>Riego 2 <input id="cfg-germH2" type="number" min="0" max="23" value="20" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+    </div>
+  </div>
+
+  <!-- Torres -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">💧 Bomba torres</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-torre" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Duración <input id="cfg-torreDur" type="number" min="1" max="60" value="2" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> min</div>
+      <div>Cada <input id="cfg-torreInt" type="number" min="1" max="120" value="10" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> min</div>
+    </div>
+  </div>
+
+  <!-- Luces -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:11px">💡 Luces full spectrum</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer">
+        <input type="checkbox" id="chk-luz" checked> Auto
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:var(--muted)">
+      <div>Encender <input id="cfg-luzOn" type="number" min="0" max="23" value="6" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+      <div>Apagar <input id="cfg-luzOff" type="number" min="0" max="23" value="22" style="width:40px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:10px"> h</div>
+    </div>
+  </div>
+
+  <button id="btn-savecfg" onclick="saveCfg()" style="width:100%;padding:9px;border-radius:7px;border:1px solid rgba(29,185,122,.4);background:rgba(29,185,122,.1);color:#1db97a;font-size:11px;cursor:pointer;font-family:var(--mono)">
+    Guardar configuración
+  </button>
+
+  <!-- PANEL LOGS — solo admin -->
+  <div style="margin-top:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Registro de cambios</div>
+      <button onclick="showLogs()" style="font-size:9px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">Ver log</button>
+    </div>
+    <div id="log-panel" style="font-size:9px;color:var(--muted)">Presioná "Ver log" (requiere admin)</div>
+  </div>
+
+</div>
+
 <div class="ibox">
       <div>Modo: <span class="iv">DEMO · datos simulados</span></div>
       <div>Bus I2C: <span class="iv">SDA=GPIO6 · SCL=GPIO7</span></div>
@@ -848,9 +1082,121 @@ function onStatus(d) {
     var e1=document.getElementById('bup'); if(e1)e1.textContent='up: '+us2;
     var e2=document.getElementById('bup2'); if(e2)e2.textContent='up: '+us2;
   }
-  if(d.time){ var ec=document.getElementById('bclk'); if(ec)ec.textContent=d.time;
-    var ec2=document.getElementById('bclk2'); if(ec2)ec2.textContent=d.time; }
+  if(d.time){
+    var ec=document.getElementById('bclk'); if(ec)ec.textContent=d.time;
+    var ec2=document.getElementById('bclk2'); if(ec2)ec2.textContent=d.time;
+  }
+  // Actualizar estado relés
+  if(d.relays) updateRelays(d.relays);
+  // Actualizar config si viene
+  if(d.cfg) updateCfgUI(d.cfg);
   checkAlerts({t:d.temp||0,h:d.hum||0});
+}
+
+// ── CONTROL DE RELÉS ────────────────────────
+var RELAY_NAMES = ['Caloventor','B. Germin.','B. Torres','Luces','Perist. A','Perist. B'];
+var RELAY_ICONS = ['🔥','💧','💧','💡','🧪','🧪'];
+
+function updateRelays(relays) {
+  var cont = document.getElementById('relay-panel');
+  if(!cont) return;
+  cont.innerHTML = '';
+  relays.forEach(function(r, i) {
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+      'padding:8px 10px;margin:4px 0;border-radius:8px;' +
+      'background:' + (r.on ? 'rgba(29,185,122,.12)' : 'var(--card)') + ';' +
+      'border:1px solid ' + (r.on ? 'rgba(29,185,122,.3)' : 'var(--border)') + ';';
+    div.innerHTML =
+      '<span style="font-size:11px">' + RELAY_ICONS[i] + ' ' + RELAY_NAMES[i] +
+      (r.man ? ' <span style="font-size:9px;color:var(--muted)">[manual]</span>' : '') +
+      '</span>' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+      '<span style="font-size:10px;color:' + (r.on?'#1db97a':'var(--muted)') + '">' +
+      (r.on ? 'ON' : 'off') + '</span>' +
+      '<button onclick="toggleRelay(' + i + ',' + (!r.on) + ')" style="' +
+      'padding:3px 10px;border-radius:5px;border:1px solid var(--border);' +
+      'background:' + (r.on ? 'rgba(232,69,69,.15)' : 'rgba(29,185,122,.15)') + ';' +
+      'color:' + (r.on ? '#e84545' : '#1db97a') + ';font-size:10px;cursor:pointer">' +
+      (r.on ? 'Apagar' : 'Encender') + '</button></div>';
+    cont.appendChild(div);
+  });
+}
+
+function toggleRelay(idx, on) {
+  fetch(espUrl('/api/relay'), {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({idx:idx, on:on, manual:true, dur:0})
+  }).then(function(){ pollESP(); });
+}
+
+// ── CONFIG AUTOMATIZACIONES ──────────────────
+function gv(id,def){ var e=document.getElementById(id); return e?e.value:def; }
+function gb(id){ var e=document.getElementById(id); return e?e.checked:false; }
+function sv(id,v){ var e=document.getElementById(id); if(e&&e!==document.activeElement)e.value=v; }
+function sb(id,v){ var e=document.getElementById(id); if(e)e.checked=v; }
+
+function updateCfgUI(c) {
+  if(!c) return;
+  sv('cfg-tempCalorOn',c.tempCalorOn); sv('cfg-tempCalorOff',c.tempCalorOff);
+  sv('cfg-tempVentOn',c.tempVentOn);   sv('cfg-tempVentOff',c.tempVentOff);
+  sv('cfg-germDur',c.germDur); sv('cfg-germH1',c.germH1); sv('cfg-germH2',c.germH2);
+  sv('cfg-torreDur',c.torreDur); sv('cfg-torreInt',c.torreInt);
+  sv('cfg-luzOn',c.luzOn); sv('cfg-luzOff',c.luzOff);
+  sv('cfg-phTarget',c.phTarget); sv('cfg-phBanda',c.phBanda); sv('cfg-phPulso',c.phPulso);
+  sv('cfg-alertTL',c.alertTL); sv('cfg-alertTH',c.alertTH);
+  sv('cfg-alertHL',c.alertHL); sv('cfg-alertHH',c.alertHH);
+  sv('cfg-alertNL',c.alertNL);
+  sb('chk-temp',c.autoTemp); sb('chk-germ',c.autoGerm);
+  sb('chk-torre',c.autoTorre); sb('chk-luz',c.autoLuz); sb('chk-ph',c.autoPH);
+  // Calcular horas de luz
+  var on=parseInt(c.luzOn||6), off=parseInt(c.luzOff||22);
+  var h = off>on ? off-on : 24-(on-off);
+  var el=document.getElementById('luz-horas'); if(el) el.textContent=h+' horas';
+}
+
+function saveCfg() {
+  // Recalcular horas luz al guardar
+  var on=parseInt(gv('cfg-luzOn',6)), off=parseInt(gv('cfg-luzOff',22));
+  var h=off>on?off-on:24-(on-off);
+  var el=document.getElementById('luz-horas'); if(el)el.textContent=h+' horas';
+
+  var cfg = {
+    tempCalorOn:  parseFloat(gv('cfg-tempCalorOn',20)),
+    tempCalorOff: parseFloat(gv('cfg-tempCalorOff',22)),
+    tempVentOn:   parseFloat(gv('cfg-tempVentOn',25)),
+    tempVentOff:  parseFloat(gv('cfg-tempVentOff',23)),
+    autoTemp: gb('chk-temp'),
+    germDur: parseInt(gv('cfg-germDur',3)),
+    germH1:  parseInt(gv('cfg-germH1',8)),
+    germH2:  parseInt(gv('cfg-germH2',20)),
+    autoGerm: gb('chk-germ'),
+    torreDur: parseInt(gv('cfg-torreDur',2)),
+    torreInt: parseInt(gv('cfg-torreInt',10)),
+    autoTorre: gb('chk-torre'),
+    luzOn:  parseInt(gv('cfg-luzOn',6)),
+    luzOff: parseInt(gv('cfg-luzOff',22)),
+    autoLuz: gb('chk-luz'),
+    phTarget: parseFloat(gv('cfg-phTarget',6.2)),
+    phBanda:  parseFloat(gv('cfg-phBanda',0.2)),
+    phPulso:  parseInt(gv('cfg-phPulso',3)),
+    autoPH: gb('chk-ph'),
+    alertTL: parseFloat(gv('cfg-alertTL',15)),
+    alertTH: parseFloat(gv('cfg-alertTH',30)),
+    alertHL: parseFloat(gv('cfg-alertHL',40)),
+    alertHH: parseFloat(gv('cfg-alertHH',85)),
+    alertNL: parseFloat(gv('cfg-alertNL',100))
+  };
+  fetch(espUrl('/api/config'),{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(cfg)
+  }).then(function(r){return r.json();})
+    .then(function(){
+      var btn=document.getElementById('btn-savecfg');
+      if(btn){btn.textContent='✓ Guardado';btn.style.color='#1db97a';
+        setTimeout(function(){btn.textContent='Guardar configuración';},2000);}
+    });
 }
 
 function pushH(arr, ts, val) {
@@ -873,7 +1219,7 @@ function loadHistory(d) {
 // Arranque automatico — sin prompt
 document.addEventListener('DOMContentLoaded', function() {
   // IP fija del ESP32 — cambiar si cambia la IP
-  var IP_FIJA = '192.168.0.66';
+  var IP_FIJA = '192.168.0.59';
 
   // Usar IP guardada o la fija
   if (!ESP_IP) {
@@ -1140,5 +1486,349 @@ function checkPwd(){
   </div>
 </div>
 
+
+<!-- ── MODAL PIN LOGIN ── -->
+<div class="auth-overlay" id="auth-overlay" style="display:none">
+  <div class="auth-card">
+    <div class="auth-title">🔐 AeroControl</div>
+    <div class="auth-sub" id="auth-sub">Ingresá tu PIN para continuar</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn del" onclick="pinClear()">Borrar todo</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ── MODAL MOTIVO ── -->
+<div class="motivo-overlay" id="motivo-overlay" style="display:none">
+  <div class="motivo-card">
+    <div class="motivo-title">📝 ¿Por qué realizás este cambio?</div>
+    <textarea class="motivo-input" id="motivo-input" rows="3"
+      placeholder="Ej: Ajuste de temperatura por cambio de estación..."></textarea>
+    <div class="motivo-btns">
+      <button class="motivo-btn motivo-cancel" onclick="motivoCancel()">Cancelar</button>
+      <button class="motivo-btn motivo-ok" onclick="motivoConfirm()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ SISTEMA DE AUTENTICACIÓN PIN ═══════════════════════
+var AUTH = {
+  token:   localStorage.getItem('ac_token')   || null,
+  nombre:  localStorage.getItem('ac_nombre')  || null,
+  rol:     localStorage.getItem('ac_rol')      || null,
+  pinBuf:  '',
+  onOk:    null,      // callback cuando login es exitoso
+  intentos: 0
+};
+
+// Usar servidor Raspberry Pi si está disponible, si no directo al ESP32
+function apiUrl(path) {
+  var pi = localStorage.getItem('pi_ip');
+  if (pi) return 'http://' + pi + path;
+  return espUrl(path.replace('/esp32',''));
+}
+
+function piUrl(path) {
+  var pi = localStorage.getItem('pi_ip') || 'localhost';
+  if (location.hostname !== 'github.io' && location.protocol !== 'https:')
+    return 'http://' + location.hostname + ':5000' + path;
+  return 'http://' + pi + ':5000' + path;
+}
+
+// Verificar sesión existente
+function verifySession(cb) {
+  if (!AUTH.token) { cb(false); return; }
+  fetch(piUrl('/auth/verify'), {
+    headers: {'X-Auth-Token': AUTH.token}
+  }).then(function(r) {
+    if (r.ok) { cb(true); } else { clearAuth(); cb(false); }
+  }).catch(function() { cb(false); });
+}
+
+function clearAuth() {
+  AUTH.token = AUTH.nombre = AUTH.rol = null;
+  localStorage.removeItem('ac_token');
+  localStorage.removeItem('ac_nombre');
+  localStorage.removeItem('ac_rol');
+}
+
+// ── PIN UI ──────────────────────────────
+function pinPress(n) {
+  if (AUTH.pinBuf.length >= 4) return;
+  AUTH.pinBuf += n;
+  updateDots();
+  if (AUTH.pinBuf.length === 4) {
+    setTimeout(submitPin, 150);
+  }
+}
+function pinDel() {
+  AUTH.pinBuf = AUTH.pinBuf.slice(0,-1);
+  updateDots();
+}
+function pinClear() {
+  AUTH.pinBuf = '';
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function updateDots() {
+  for(var i=0;i<4;i++) {
+    var d = document.getElementById('pd'+i);
+    d.classList.toggle('filled', i < AUTH.pinBuf.length);
+    d.classList.remove('error');
+  }
+}
+function pinError(msg) {
+  for(var i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
+  document.getElementById('pin-error').textContent = msg;
+  AUTH.pinBuf = '';
+  setTimeout(updateDots, 600);
+}
+
+function submitPin() {
+  fetch(piUrl('/auth/login'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({pin: AUTH.pinBuf})
+  }).then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        AUTH.token  = d.token;
+        AUTH.nombre = d.nombre;
+        AUTH.rol    = d.rol;
+        AUTH.intentos = 0;
+        localStorage.setItem('ac_token',  d.token);
+        localStorage.setItem('ac_nombre', d.nombre);
+        localStorage.setItem('ac_rol',    d.rol);
+        document.getElementById('auth-overlay').style.display = 'none';
+        // Actualizar UI header
+        var ul = document.getElementById('user-label');
+        if (ul) ul.textContent = '👤 ' + d.nombre;
+        if (AUTH.onOk) { AUTH.onOk(); AUTH.onOk = null; }
+      } else {
+        AUTH.intentos++;
+        AUTH.pinBuf = '';
+        if (AUTH.intentos >= 3) {
+          pinError('Demasiados intentos. Esperá 30s.');
+          setTimeout(function(){AUTH.intentos=0;}, 30000);
+        } else {
+          pinError('PIN incorrecto (' + AUTH.intentos + '/3)');
+        }
+      }
+    }).catch(function() {
+      // Sin servidor Pi — modo directo (solo dashboard, sin log)
+      pinError('Sin conexión al servidor');
+      AUTH.pinBuf = '';
+    });
+}
+
+// Mostrar modal de PIN
+function requireLogin(cb) {
+  if (AUTH.token) {
+    verifySession(function(ok) {
+      if (ok) { cb(); }
+      else { AUTH.onOk = cb; showPinModal(); }
+    });
+  } else {
+    AUTH.onOk = cb;
+    showPinModal();
+  }
+}
+
+function showPinModal() {
+  AUTH.pinBuf = '';
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function doLogout() {
+  if (AUTH.token) {
+    fetch(piUrl('/auth/logout'), {
+      method: 'POST',
+      headers: {'X-Auth-Token': AUTH.token}
+    }).catch(function(){});
+  }
+  clearAuth();
+  var ul = document.getElementById('user-label');
+  if (ul) ul.textContent = '';
+}
+
+// ── MODAL MOTIVO ───────────────────────
+var _motivoCb = null;
+function pedirMotivo(cb) {
+  _motivoCb = cb;
+  document.getElementById('motivo-input').value = '';
+  document.getElementById('motivo-overlay').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('motivo-input').focus(); }, 100);
+}
+function motivoConfirm() {
+  var m = document.getElementById('motivo-input').value.trim();
+  if (m.length < 3) {
+    document.getElementById('motivo-input').style.borderColor = '#e84545';
+    return;
+  }
+  document.getElementById('motivo-overlay').style.display = 'none';
+  if (_motivoCb) { _motivoCb(m); _motivoCb = null; }
+}
+function motivoCancel() {
+  document.getElementById('motivo-overlay').style.display = 'none';
+  _motivoCb = null;
+}
+
+// ── GUARDAR CONFIG CON AUTH Y MOTIVO ──
+function saveCfg() {
+  // Guardar config directo al ESP32
+  var _doSave = function(motivo) {
+      var on=parseInt(gv('cfg-luzOn',6)), off=parseInt(gv('cfg-luzOff',22));
+      var h=off>on?off-on:24-(on-off);
+      var el=document.getElementById('luz-horas'); if(el)el.textContent=h+' horas';
+
+      var cfg = {
+        tempCalorOn:  parseFloat(gv('cfg-tempCalorOn',20)),
+        tempCalorOff: parseFloat(gv('cfg-tempCalorOff',22)),
+        tempVentOn:   parseFloat(gv('cfg-tempVentOn',25)),
+        tempVentOff:  parseFloat(gv('cfg-tempVentOff',23)),
+        autoTemp: gb('chk-temp'),
+        germDur:  parseInt(gv('cfg-germDur',3)),
+        germH1:   parseInt(gv('cfg-germH1',8)),
+        germH2:   parseInt(gv('cfg-germH2',20)),
+        autoGerm: gb('chk-germ'),
+        torreDur: parseInt(gv('cfg-torreDur',2)),
+        torreInt: parseInt(gv('cfg-torreInt',10)),
+        autoTorre: gb('chk-torre'),
+        luzOn:   parseInt(gv('cfg-luzOn',6)),
+        luzOff:  parseInt(gv('cfg-luzOff',22)),
+        autoLuz: gb('chk-luz'),
+        phTarget: parseFloat(gv('cfg-phTarget',6.2)),
+        phBanda:  parseFloat(gv('cfg-phBanda',0.2)),
+        phPulso:  parseInt(gv('cfg-phPulso',3)),
+        autoPH: gb('chk-ph'),
+        alertTL: parseFloat(gv('cfg-alertTL',15)),
+        alertTH: parseFloat(gv('cfg-alertTH',30)),
+        alertHL: parseFloat(gv('cfg-alertHL',40)),
+        alertHH: parseFloat(gv('cfg-alertHH',85)),
+        alertNL: parseFloat(gv('cfg-alertNL',100))
+      };
+
+      fetch(piUrl('/api/config'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Auth-Token': AUTH.token || ''
+        },
+        body: JSON.stringify({config: cfg, motivo: motivo})
+      }).then(function(r){ return r.json(); })
+        .then(function(d){
+          var btn=document.getElementById('btn-savecfg');
+          if(btn){
+            btn.textContent = d.ok ? '✓ Guardado' : '✗ Error';
+            btn.style.color = d.ok ? '#1db97a' : '#e84545';
+            setTimeout(function(){
+              btn.textContent='Guardar configuración';
+              btn.style.color='#1db97a';
+            }, 2000);
+          }
+        }).catch(function(){
+          // Fallback directo al ESP32 sin log
+          fetch(espUrl('/api/config'), {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(cfg)
+          });
+        });
+    });
+  });
+}
+
+// ── TOGGLE RELAY CON AUTH ──────────────
+function toggleRelay(idx, on) {
+  // Intentar via Pi primero, si falla directo al ESP32
+  var payload = JSON.stringify({idx:idx, on:on, manual:true, dur:0});
+  
+  fetch(espUrl('/api/relay'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: payload
+  }).then(function(r){ 
+    if(r.ok) { 
+      setTimeout(pollESP, 500);
+    }
+  }).catch(function(){
+    console.log('Relay error');
+  });
+}
+
+// ── PANEL LOGS (solo admin) ────────────
+function showLogs() {
+  requireLogin(function() {
+    if (AUTH.rol !== 'admin') {
+      alert('Solo el administrador puede ver los logs');
+      return;
+    }
+    fetch(piUrl('/api/logs/cambios?limit=30'), {
+      headers: {'X-Auth-Token': AUTH.token}
+    }).then(function(r){ return r.json(); })
+      .then(function(logs) {
+        var cont = document.getElementById('log-panel');
+        if (!cont) return;
+        if (!logs.length) { cont.innerHTML='<div style="font-size:10px;color:var(--muted)">Sin cambios registrados</div>'; return; }
+        var t = '<table class="log-table"><tr><th>Fecha</th><th>Usuario</th><th>Campo</th><th>Antes</th><th>Después</th><th>Motivo</th></tr>';
+        logs.forEach(function(l) {
+          t += '<tr><td>'+l.fecha+'</td><td>'+l.nombre+'</td><td>'+l.campo+'</td>'+
+               '<td>'+l.valor_ant+'</td><td>'+l.valor_nuevo+'</td>'+
+               '<td>'+l.motivo+'</td></tr>';
+        });
+        t += '</table>';
+        cont.innerHTML = t;
+      }).catch(function(){
+        var cont = document.getElementById('log-panel');
+        if(cont) cont.innerHTML='<div style="font-size:10px;color:var(--muted)">Sin conexión al servidor Pi</div>';
+      });
+  });
+}
+
+// Inicializar auth al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  // Agregar label usuario en header si existe
+  var header = document.querySelector('.lsub');
+  if (header && !document.getElementById('user-label')) {
+    var ul = document.createElement('span');
+    ul.id = 'user-label';
+    ul.style.cssText = 'font-size:9px;color:#1db97a;margin-left:8px;cursor:pointer';
+    ul.onclick = doLogout;
+    ul.title = 'Click para cerrar sesión';
+    header.parentNode.insertBefore(ul, header.nextSibling);
+  }
+  // Verificar sesión guardada
+  if (AUTH.token) {
+    verifySession(function(ok) {
+      if (ok && document.getElementById('user-label')) {
+        document.getElementById('user-label').textContent = '👤 ' + AUTH.nombre;
+      } else if (!ok) {
+        clearAuth();
+      }
+    });
+  }
+});
+</script>
 </body>
 </html>
